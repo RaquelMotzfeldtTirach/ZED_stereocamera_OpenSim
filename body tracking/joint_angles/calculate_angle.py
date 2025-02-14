@@ -1,20 +1,29 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Notes to myself
+# dot product or cross product gives the same angles. 
+# 
+
 class JointAnglesPlotter:
     def __init__(self):
-        # Initialize the plot
         self.fig, self.ax = plt.subplots()
+        plt.ion()
         self.ax.set_ylim(0, 180)
-        self.ax.set_xlabel('Joints')
+        self.ax.set_xlabel('Joints and Methods')
         self.ax.set_ylabel('Angles (degrees)')
-        self.ax.set_title('Joint Angles')
+        self.ax.set_title('Joint Angles by Different Methods')
+        self.angle_methods = ['dot_product', 'cross_product']
         self.joints = ['left_elbow', 'right_elbow', 'neck']
-        self.bars = self.ax.bar(self.joints, [0]*len(self.joints), color='blue')
-        
-    def calculate_angle(self, p1, p2, p3):
+        self.bar_positions = range(len(self.joints) * len(self.angle_methods))
+        self.bars = self.ax.bar(self.bar_positions, [0] * len(self.bar_positions), color='blue')
+        self.ax.set_xticks(self.bar_positions)
+        self.ax.set_xticklabels([f'{joint}_{method}' for joint in self.joints for method in self.angle_methods], rotation=45)
+        plt.show()
+
+    def calculate_angle_dot_product(self, p1, p2, p3):
         '''
-        Calculate the angle between three points.
+        Calculate the angle between three points using dot product.
         The points are expected to be numpy arrays with 3 elements (x, y, z).
         '''
         v1 = p1 - p2
@@ -23,39 +32,57 @@ class JointAnglesPlotter:
         angle_deg = np.degrees(angle_rad)
         return angle_deg
 
+    def calculate_angle_cross_product(self, p1, p2, p3):
+        '''
+        Calculate the angle between three points using cross product.
+        The points are expected to be numpy arrays with 3 elements (x, y, z).
+        '''
+        v1 = p1 - p2
+        v2 = p3 - p2
+        cross_prod_len = np.linalg.norm(np.cross(v1, v2))
+        dot_prod = np.dot(v1, v2)
+        angle_rad = np.arctan2(cross_prod_len, dot_prod)
+        angle_deg = np.degrees(angle_rad)
+        return angle_deg
+
     def get_joint_angles(self, body):
         '''
-        Get the angles at the elbows and the neck for the body. This only works for a 38-joint body format.
+        Get the angles at the elbows and the neck for the body using different methods.
+        This only works for a 38-joint body format.
         '''
-        angles = {}
+        angles = {method: {} for method in self.angle_methods}
+        
+        def calculate_angles(p1, p2, p3, angles, joint_name):
+            angles['dot_product'][joint_name] = self.calculate_angle_dot_product(p1, p2, p3)
+            angles['cross_product'][joint_name] = self.calculate_angle_cross_product(p1, p2, p3)
         
         # Elbow angles (between shoulder, elbow, and wrist)
         if (body.keypoint[12] is not None and 
             body.keypoint[14] is not None and
             body.keypoint[16] is not None):
-            angles['left_elbow'] = self.calculate_angle(body.keypoint[12], body.keypoint[14], body.keypoint[16])
+            calculate_angles(body.keypoint[12], body.keypoint[14], body.keypoint[16], angles, 'left_elbow')
         
         if (body.keypoint[13] is not None and 
             body.keypoint[15] is not None and
             body.keypoint[17] is not None):
-            angles['right_elbow'] = self.calculate_angle(body.keypoint[13], body.keypoint[15], body.keypoint[17])
+            calculate_angles(body.keypoint[13], body.keypoint[15], body.keypoint[17], angles, 'right_elbow')
           
-        # Neck angle (between shoulders and neck)
-        if (body.keypoint[9] is not None and 
-            body.keypoint[8] is not None and
+        # Neck angle (using middle point between ears, neck, and upper spine)
+        if (body.keypoint[5] is not None and 
             body.keypoint[4] is not None and
-            body.keypoint[3] is not None):
-            # middle point between ears
-            ear_midpoint = (body.keypoint[9] + body.keypoint[8]) / 2
-            angles['neck'] = self.calculate_angle(ear_midpoint, body.keypoint[4], body.keypoint[3])
+            body.keypoint[3] is not None and 
+            body.keypoint[6] is not None and 
+            body.keypoint[7] is not None):
+            ear_midpoint = (body.keypoint[6] + body.keypoint[7]) / 2
+            calculate_angles(ear_midpoint, body.keypoint[4], body.keypoint[3], angles, 'neck')
         
         return angles
     
     def update_plot(self, angles):
         '''
-        Update the bar plot with the new angles.
+        Update the bar plot with the new angles for different methods.
         '''
-        angle_values = [angles.get(joint, 0) for joint in self.joints]
+        angle_values = [angles[method].get(joint, 0) for joint in self.joints for method in self.angle_methods]
         for i, bar in enumerate(self.bars):
             bar.set_height(angle_values[i])
         plt.draw()
@@ -65,7 +92,7 @@ class JointAnglesPlotter:
         '''
         Continuously update plot in its own window.
         '''
-        plt.ion()
+        plt.ion
         plt.show()
 
     def close_plot(self):
