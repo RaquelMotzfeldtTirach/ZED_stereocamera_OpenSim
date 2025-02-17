@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Notes to myself
-# dot product or cross product gives the same angles. 
+# dot product or cross product gives the same angles :)
 # 
 
 class JointAnglesPlotter:
@@ -68,13 +68,60 @@ class JointAnglesPlotter:
             calculate_angles(body.keypoint[13], body.keypoint[15], body.keypoint[17], angles, 'right_elbow')
           
         # Neck angle (using middle point between ears, neck, and upper spine)
-        if (body.keypoint[5] is not None and 
-            body.keypoint[4] is not None and
+        if (body.keypoint[4] is not None and
             body.keypoint[3] is not None and 
             body.keypoint[6] is not None and 
             body.keypoint[7] is not None):
             ear_midpoint = (body.keypoint[6] + body.keypoint[7]) / 2
             calculate_angles(ear_midpoint, body.keypoint[4], body.keypoint[3], angles, 'neck')
+
+        # Wrist angles (between elbow, wrist, and hand) TODO !
+        if (body.keypoint[14] is not None and 
+            body.keypoint[16] is not None and
+            body.keypoint[18] is not None):
+            calculate_angles(body.keypoint[14], body.keypoint[16], body.keypoint[18], angles, 'left_wrist')
+        
+        if (body.keypoint[15] is not None and 
+            body.keypoint[17] is not None and
+            body.keypoint[19] is not None):
+            calculate_angles(body.keypoint[15], body.keypoint[17], body.keypoint[19], angles, 'right_wrist')
+
+        # Shoulder angles (between clavicle, shoulder, and elbow) 
+        if (body.keypoint[14] is not None and 
+            body.keypoint[12] is not None and
+            body.keypoint[10] is not None):
+            calculate_angles(body.keypoint[14], body.keypoint[12], body.keypoint[10], angles, 'left_shoulder')
+        
+        if (body.keypoint[15] is not None and 
+            body.keypoint[13] is not None and
+            body.keypoint[11] is not None):
+            calculate_angles(body.keypoint[15], body.keypoint[13], body.keypoint[11], angles, 'right_shoulder')
+        
+        # Pelvis angles (between middle of hips, pelvis, and lower spine (1))
+        if (body.keypoint[18] is not None and 
+            body.keypoint[19] is not None and
+            body.keypoint[0] is not None and 
+            body.keypoint[1] is not None ):
+            hips_midpoint = (body.keypoint[18] + body.keypoint[19]) / 2
+            calculate_angles(hips_midpoint, body.keypoint[0], body.keypoint[1], angles, 'pelvis')
+
+        # Spine 1 angles (between pelvis, spine 1 and spine 2)
+        if (body.keypoint[0] is not None and 
+            body.keypoint[1] is not None and
+            body.keypoint[2] is not None):
+            calculate_angles(body.keypoint[0], body.keypoint[1], body.keypoint[2], angles, 'spine_1')
+        
+        # Spine 2 angles (between spine 1, spine 2 and spine 3)
+        if (body.keypoint[1] is not None and 
+            body.keypoint[2] is not None and
+            body.keypoint[3] is not None):
+            calculate_angles(body.keypoint[1], body.keypoint[2], body.keypoint[3], angles, 'spine_2')
+        
+        # Spine 3 angles (between spine 2, spine 3 and neck)
+        if (body.keypoint[2] is not None and 
+            body.keypoint[3] is not None and
+            body.keypoint[4] is not None):
+            calculate_angles(body.keypoint[2], body.keypoint[3], body.keypoint[4], angles, 'spine_3')
         
         return angles
     
