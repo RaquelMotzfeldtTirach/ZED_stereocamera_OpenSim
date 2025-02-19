@@ -141,8 +141,8 @@ def main():
             # Get joint angles
             if len(bodies.body_list) > 0:
                 body = bodies.body_list[0]
-                angles = angle_plotter.get_joint_angles(body)
-                angle_plotter.update_plot(angles)
+                angles, angles_confidence = angle_plotter.get_joint_angles(body)
+                angle_plotter.update_plot(angles, angles_confidence)
 
             key = cv2.waitKey(key_wait)
             if key == 113: # for 'q' key
