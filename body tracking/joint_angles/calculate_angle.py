@@ -8,6 +8,9 @@ import tkinter as tk
 # todo: rethink max and min values for the plot, some joints are not in the range 0-180
 # todo: smooth the plot over time to avoid flickering
 # todo: inverse kinematics for the upper body 
+# todo: test angles at wrist, neck and shoulder and add forearm rotation, neck rotation (rotations in general are difficult)
+# todo: ear are not always detected, need to find a way to calculate the neck angle without them
+# todo: how do I split the neck angle in flexion/extension and lateral bending components? 
 
 class JointAnglesPlotter:
     def __init__(self):
@@ -32,8 +35,8 @@ class JointAnglesPlotter:
         self.ax.set_ylabel('Angles (degrees)')
         self.ax.set_title('Joint Angles by Different Methods')
         self.angle_methods = ['cross_product']
-        self.joints = ['left_elbow', 'right_elbow', 'neck', 'left_wrist', 'right_wrist', 'left_shoulder', 'right_shoulder', 'pelvis', 'spine_1', 'spine_2', 'spine_3']
-        self.joint_scales = [[0, 180], [0, 180], [90, 270], [90, 270], [90, 270], [0, 180], [0 , 180], [0, 180], [0, 270], [0, 180], [0, 180]]
+        self.joints = ['left_elbow_flexion/extension', 'right_elbow_flexion/extension', 'neck_flexion/extension', 'neck_lateral_bending' , 'left_wrist_flexion/extension', 'right_wrist_flexion/extension', 'left_wrist_radial/ulnar_deviation', 'right_wrist_radial/ulnar_deviation' ,'left_shoulder_flexion/extension', 'right_shoulder_flexion/extension', 'left_shoulder_abduction/adduction', 'right_shoulder_abduction/adduction','left_shoulder_horizontal_flexion/extension', 'right_shoulder_horizontal_flexion/extension', 'pelvis', 'spine_1', 'spine_2', 'spine_3']
+        self.joint_scales = [[0, 160], [0, 160], [-90, 90], [-50, 50] ,[-50, 50], [-50, 50], [-40, 40], [-40, 40], [0, 180], [0 , 180], [0, 180], [0, 270], [0, 180], [0, 180]]
         self.bar_positions = range(len(self.joints) * len(self.angle_methods))
         self.bars = self.ax.bar(self.bar_positions, [0] * len(self.bar_positions), color='blue')
         self.ax.set_xticks(self.bar_positions)
@@ -87,27 +90,36 @@ class JointAnglesPlotter:
         def calculate_angle_confidence(index_list, angles_confidence, joint_name):
             angles_confidence['cross_product'][joint_name] = self.calculate_angle_average_confidence(body.keypoint_confidence, index_list)
         
-        # Elbow angles (between shoulder, elbow, and wrist)
+        # Elbow angles (between shoulder, elbow, and wrist) flexion/extension
         if (body.keypoint[12] is not None and 
             body.keypoint[14] is not None and
             body.keypoint[16] is not None):
-            calculate_angles(body.keypoint[12], body.keypoint[14], body.keypoint[16], angles, 'left_elbow')
-            calculate_angle_confidence([12, 14, 16], angles_confidence, 'left_elbow')
+            calculate_angles(body.keypoint[12], body.keypoint[14], body.keypoint[16], angles, 'left_elbow_flexion/extension')
+            calculate_angle_confidence([12, 14, 16], angles_confidence, 'left_elbow_flexion/extension')
         
         if (body.keypoint[13] is not None and 
             body.keypoint[15] is not None and
             body.keypoint[17] is not None):
-            calculate_angles(body.keypoint[13], body.keypoint[15], body.keypoint[17], angles, 'right_elbow')
-            calculate_angle_confidence([13, 15, 17], angles_confidence, 'right_elbow')
+            calculate_angles(body.keypoint[13], body.keypoint[15], body.keypoint[17], angles, 'right_elbow_flexion/extension')
+            calculate_angle_confidence([13, 15, 17], angles_confidence, 'right_elbow_flexion/extension')
           
-        # Neck angle (using middle point between ears, neck, and upper spine)
+        # Neck flexion/extension angle (using middle point between ears, neck, and upper spine)
         if (body.keypoint[4] is not None and
             body.keypoint[3] is not None and 
             body.keypoint[6] is not None and 
             body.keypoint[7] is not None):
             ear_midpoint = (body.keypoint[6] + body.keypoint[7]) / 2
-            calculate_angles(ear_midpoint, body.keypoint[4], body.keypoint[3], angles, 'neck')
-            calculate_angle_confidence([6, 4, 3], angles_confidence, 'neck')
+            calculate_angles(ear_midpoint, body.keypoint[4], body.keypoint[3], angles, 'neck_flexion/extension')
+            calculate_angle_confidence([6, 4, 3], angles_confidence, 'neck_flexion/extension')
+
+        # Neck lateral bending angle (using middle point between ears, neck, and upper spine) - TODO how to split this angle in two components?
+        if (body.keypoint[4] is not None and
+            body.keypoint[3] is not None and 
+            body.keypoint[6] is not None and 
+            body.keypoint[7] is not None):
+            ear_midpoint = (body.keypoint[6] + body.keypoint[7]) / 2
+            calculate_angles(ear_midpoint, body.keypoint[4], body.keypoint[3], angles, 'neck_lateral_bending')
+            calculate_angle_confidence([6, 4, 3], angles_confidence, 'neck_lateral_bending')
 
         # Shoulder angles (between clavicle, shoulder, and elbow) 
         if (body.keypoint[14] is not None and 
@@ -153,23 +165,38 @@ class JointAnglesPlotter:
             calculate_angle_confidence([2, 3, 4], angles_confidence, 'spine_3')
 
 
-        # Calculate left wrist angle
+        # Calculate left wrist flexion/extension angle - TO TEST
         if (body.keypoint[14] is not None and 
             body.keypoint[16] is not None and
             body.keypoint[32] is not None and
             body.keypoint[36] is not None):
             fingers_midpoint_left = (body.keypoint[32] + body.keypoint[36]) / 2
-            calculate_angles(body.keypoint[14], body.keypoint[16], fingers_midpoint_left, angles, 'left_wrist')
-            calculate_angle_confidence([14, 16, 32, 36], angles_confidence, 'left_wrist')
+            calculate_angles(body.keypoint[14], body.keypoint[16], fingers_midpoint_left, angles, 'left_wrist_flexion/extension')
+            calculate_angle_confidence([14, 16, 32, 36], angles_confidence, 'left_wrist_flexion/extension')
 
-        # Calculate right wrist angle
+        # Calculate right wrist flexion/extension angle - TO TEST
         if (body.keypoint[15] is not None and 
             body.keypoint[17] is not None and
             body.keypoint[33] is not None and
             body.keypoint[37] is not None):
             fingers_midpoint_right = (body.keypoint[33] + body.keypoint[37]) / 2
-            calculate_angles(body.keypoint[15], body.keypoint[17], fingers_midpoint_right, angles, 'right_wrist')
-            calculate_angle_confidence([15, 17, 33, 37], angles_confidence, 'right_wrist')
+            calculate_angles(body.keypoint[15], body.keypoint[17], fingers_midpoint_right, angles, 'right_wrist_flexion/extension')
+            calculate_angle_confidence([15, 17, 33, 37], angles_confidence, 'right_wrist_flexion/extension')
+
+
+        # Calculate left wrist radial/ulnar deviation angle - TO TEST
+        if (body.keypoint[14] is not None and 
+            body.keypoint[16] is not None and
+            body.keypoint[34] is not None):
+            calculate_angles(body.keypoint[14], body.keypoint[16], body.keypoint[34], angles, 'left_wrist_radial/ulnar_deviation')
+            calculate_angle_confidence([14, 16, 34], angles_confidence, 'left_wrist_radial/ulnar_deviation')
+
+        # Calculate right wrist radial/ulnar deviation angle - TO TEST
+        if (body.keypoint[15] is not None and 
+            body.keypoint[17] is not None and
+            body.keypoint[35] is not None):
+            calculate_angles(body.keypoint[15], body.keypoint[17], body.keypoint[35], angles, 'right_wrist_radial/ulnar_deviation')
+            calculate_angle_confidence([15, 17, 35], angles_confidence, 'right_wrist_radial/ulnar_deviation')
 
         
         return angles, angles_confidence
