@@ -32,3 +32,7 @@ Arguments:
 
 ## Support
 If you need assistance go to our Community site at https://community.stereolabs.com/
+
+I had problems with conda taking over the python path, so I ran 
+conda deactivate 
+and then it worked

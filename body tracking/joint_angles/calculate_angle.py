@@ -10,7 +10,7 @@ import tkinter as tk
 # todo: inverse kinematics for the upper body 
 # todo: test angles at wrist, neck and shoulder and add forearm rotation, neck rotation (rotations in general are difficult)
 # todo: ear are not always detected, need to find a way to calculate the neck angle without them
-# todo: how do I split the neck angle in flexion/extension and lateral bending components? 
+
 
 class JointAnglesPlotter:
     def __init__(self):
@@ -36,7 +36,7 @@ class JointAnglesPlotter:
         self.ax.set_title('Joint Angles by Different Methods')
         self.angle_methods = ['cross_product']
         self.joints = ['left_elbow_flexion/extension', 'right_elbow_flexion/extension', 'neck_flexion/extension', 'neck_lateral_bending' , 'left_wrist_flexion/extension', 'right_wrist_flexion/extension', 'left_wrist_radial/ulnar_deviation', 'right_wrist_radial/ulnar_deviation' ,'left_shoulder_flexion/extension', 'right_shoulder_flexion/extension', 'left_shoulder_abduction/adduction', 'right_shoulder_abduction/adduction','left_shoulder_horizontal_flexion/extension', 'right_shoulder_horizontal_flexion/extension', 'pelvis', 'spine_1', 'spine_2', 'spine_3']
-        self.joint_scales = [[0, 160], [0, 160], [-90, 90], [-50, 50] ,[-50, 50], [-50, 50], [-40, 40], [-40, 40], [0, 180], [0 , 180], [0, 180], [0, 270], [0, 180], [0, 180]]
+        #self.joint_scales = [[0, 160], [0, 160], [-90, 90], [-50, 50] ,[-50, 50], [-50, 50], [-40, 40], [-40, 40], [0, 180], [0 , 180], [0, 180], [0, 270], [0, 180], [0, 180]]
         self.bar_positions = range(len(self.joints) * len(self.angle_methods))
         self.bars = self.ax.bar(self.bar_positions, [0] * len(self.bar_positions), color='blue')
         self.ax.set_xticks(self.bar_positions)
@@ -66,6 +66,43 @@ class JointAnglesPlotter:
         angle_deg = np.degrees(angle_rad)
         return angle_deg
     
+    def calculate_angle_on_plane(self, p1, p2, p3, plane):
+        '''
+        Calculate the angle between three points on a plane.
+        '''
+        # Function to project a point onto the plane
+        def project_point_onto_plane(point, plane_point, normal_vector):
+            vector_from_plane = point - plane_point
+            distance_to_plane = np.dot(vector_from_plane, normal_vector)
+            projected_point = point - distance_to_plane * normal_vector
+            return projected_point
+        if plane:
+            # Get the plane parameters
+            n = plane[0]
+            d = plane[1]
+
+            # Project points p1, p2, p3 onto the plane
+            p1_proj = project_point_onto_plane(p1, d, n)
+            p2_proj = project_point_onto_plane(p2, d, n)
+            p3_proj = project_point_onto_plane(p3, d, n)
+
+            # Compute vectors AB and AC in the plane
+            p12_proj = p2_proj - p1_proj
+            p13_proj = p3_proj - p1_proj
+
+            # Normalize the vectors
+            p12_proj_norm = p12_proj / np.linalg.norm(p12_proj)
+            p13_proj_norm = p13_proj / np.linalg.norm(p13_proj)
+
+            # Calculate the dot product and the angle between the vectors
+            dot_product = np.dot(p12_proj_norm, p13_proj_norm)
+            angle_rad = np.arccos(dot_product)
+            angle_deg = np.degrees(angle_rad)
+            return angle_deg
+        else:
+            return 0
+
+    
     def calculate_angle_average_confidence(self, confidence, index_list):   
         '''
         Calculate the  confidence average for the three points.
@@ -83,12 +120,18 @@ class JointAnglesPlotter:
         angles = {method: {} for method in self.angle_methods}
         angles_confidence = {method: {} for method in self.angle_methods}
 
-        
+        # Get biomechanical planes
+        coronal_plane, sagittal_plane, transverse_plane = self.biomechanical_planes(body)
+
+        # Define the functions to calculate the angles
         def calculate_angles(p1, p2, p3, angles, joint_name):
             angles['cross_product'][joint_name] = self.calculate_angle_cross_product(p1, p2, p3)
 
         def calculate_angle_confidence(index_list, angles_confidence, joint_name):
             angles_confidence['cross_product'][joint_name] = self.calculate_angle_average_confidence(body.keypoint_confidence, index_list)
+        
+        def calculate_angles_on_plane(p1, p2, p3, plane, angles, joint_name):
+            angles['cross_product'][joint_name] = self.calculate_angle_on_plane(p1, p2, p3, plane)
         
         # Elbow angles (between shoulder, elbow, and wrist) flexion/extension
         if (body.keypoint[12] is not None and 
@@ -103,36 +146,64 @@ class JointAnglesPlotter:
             calculate_angles(body.keypoint[13], body.keypoint[15], body.keypoint[17], angles, 'right_elbow_flexion/extension')
             calculate_angle_confidence([13, 15, 17], angles_confidence, 'right_elbow_flexion/extension')
           
-        # Neck flexion/extension angle (using middle point between ears, neck, and upper spine)
+        # Neck flexion/extension angle (using middle point between ears, neck, and upper spine) in the sagittal plane
         if (body.keypoint[4] is not None and
             body.keypoint[3] is not None and 
             body.keypoint[6] is not None and 
             body.keypoint[7] is not None):
             ear_midpoint = (body.keypoint[6] + body.keypoint[7]) / 2
-            calculate_angles(ear_midpoint, body.keypoint[4], body.keypoint[3], angles, 'neck_flexion/extension')
+            calculate_angles_on_plane(ear_midpoint, body.keypoint[4], body.keypoint[3], sagittal_plane, angles, 'neck_flexion/extension')
             calculate_angle_confidence([6, 4, 3], angles_confidence, 'neck_flexion/extension')
 
-        # Neck lateral bending angle (using middle point between ears, neck, and upper spine) - TODO how to split this angle in two components?
+        # Neck lateral bending angle (using middle point between ears, neck, and upper spine) in the coronal plane
         if (body.keypoint[4] is not None and
             body.keypoint[3] is not None and 
             body.keypoint[6] is not None and 
             body.keypoint[7] is not None):
             ear_midpoint = (body.keypoint[6] + body.keypoint[7]) / 2
-            calculate_angles(ear_midpoint, body.keypoint[4], body.keypoint[3], angles, 'neck_lateral_bending')
+            calculate_angles_on_plane(ear_midpoint, body.keypoint[4], body.keypoint[3], coronal_plane, angles, 'neck_lateral_bending')
             calculate_angle_confidence([6, 4, 3], angles_confidence, 'neck_lateral_bending')
 
         # Shoulder angles (between clavicle, shoulder, and elbow) 
+        # On Coronal Plane - DEFINE NAME
         if (body.keypoint[14] is not None and 
             body.keypoint[12] is not None and
             body.keypoint[10] is not None):
-            calculate_angles(body.keypoint[14], body.keypoint[12], body.keypoint[10], angles, 'left_shoulder')
-            calculate_angle_confidence([14, 12, 10], angles_confidence, 'left_shoulder')
+            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], coronal_plane, angles, 'left_shoulder_coronal')
+            calculate_angle_confidence([14, 12, 10], angles_confidence, 'left_shoulder_coronal')
         
         if (body.keypoint[15] is not None and 
             body.keypoint[13] is not None and
             body.keypoint[11] is not None):
-            calculate_angles(body.keypoint[15], body.keypoint[13], body.keypoint[11], angles, 'right_shoulder')
-            calculate_angle_confidence([15, 13, 11], angles_confidence, 'right_shoulder')
+            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], coronal_plane, angles, 'right_shoulder_coronal')
+            calculate_angle_confidence([15, 13, 11], angles_confidence, 'right_shoulder_coronal')
+
+        # On Sagittal Plane - DEFINE NAME
+        if (body.keypoint[14] is not None and
+            body.keypoint[12] is not None and
+            body.keypoint[10] is not None):
+            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], sagittal_plane, angles, 'left_shoulder_sagittal')
+            calculate_angle_confidence([14, 12, 10], angles_confidence, 'left_shoulder_sagittal')
+
+        if (body.keypoint[15] is not None and
+            body.keypoint[13] is not None and
+            body.keypoint[11] is not None):
+            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], sagittal_plane, angles, 'right_shoulder_sagittal')
+            calculate_angle_confidence([15, 13, 11], angles_confidence, 'right_shoulder_sagittal')
+        
+        # On Transverse Plane - DEFINE NAME
+        if (body.keypoint[14] is not None and
+            body.keypoint[12] is not None and
+            body.keypoint[10] is not None):
+            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], transverse_plane, angles, 'left_shoulder_transverse')
+            calculate_angle_confidence([14, 12, 10], angles_confidence, 'left_shoulder_transverse')
+        
+        if (body.keypoint[15] is not None and
+            body.keypoint[13] is not None and
+            body.keypoint[11] is not None):
+            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], transverse_plane, angles, 'right_shoulder_transverse')
+            calculate_angle_confidence([15, 13, 11], angles_confidence, 'right_shoulder_transverse')
+
         
         # Pelvis angles (between middle of hips, pelvis, and lower spine (1))
         if (body.keypoint[18] is not None and 
@@ -219,28 +290,98 @@ class JointAnglesPlotter:
         Update the bar plot with the new angles for different methods.
         And the color of the bars depending on the average confidence of the joints.
         '''
-        angle_values = []
+        #angle_values = []
         confidence_values = []
         original_angle_values = []
 
         for joint_idx, joint in enumerate(self.joints):
-            min_angle, max_angle = self.joint_scales[joint_idx]
+            #min_angle, max_angle = self.joint_scales[joint_idx]
 
             for method in self.angle_methods:
                 original_angle = angles[method].get(joint, 0)
                 original_angle_values.append(original_angle)
-                angle_values.append(self.rescale_angle(original_angle, min_angle, max_angle))
-                angle_values.append(angles[method].get(joint, 0))
+                #angle_values.append(self.rescale_angle(original_angle, min_angle, max_angle))
+                #angle_values.append(angles[method].get(joint, 0))
                 confidence_raw = angles_confidence[method].get(joint, 40)
                 confidence_values.append(self.normalize_confidence(confidence_raw))
         
         for i, bar in enumerate(self.bars):
-            bar.set_height(angle_values[i])
+            bar.set_height(original_angle_values[i])
             bar.set_color(self.cmap(confidence_values[i]))
             self.bar_labels[i].set_text(f'{original_angle_values[i]:.2f}°')
 
         plt.draw()
         plt.pause(0.001)
+
+
+
+    def biomechanical_planes(self, body ):
+        # Define the keypoints for each plane
+        sagittal_indices = [0, 3, 2]  # Pelvis, Spine, Spine
+        coronal_indices = [11, 10, 0]   # Left Shoulder, Right Shoulder, Pelvis
+        transverse_indices = [19, 18, 0]  # Left Hip, Right Hip, Pelvis
+        normal_indices = [4, 11, 3]  # Neck, Soulder, Spine
+
+        def get_valid_keypoints(indices):
+            return [body.keypoint[idx] for idx in indices if body.keypoint_confidence[idx] > 40]
+
+        def check_keypoints(kps):
+            return all(kp[0] > 0 and kp[1] > 0 for kp in kps)
+        
+        def simple_plane(kps):
+            if len(kps) >= 3 and check_keypoints(kps):
+                kp_points = np.array(kps)
+                print(kp_points)
+                v1 = np.array(kp_points[1]) - np.array(kp_points[0])
+                v2 = np.array(kp_points[2]) - np.array(kp_points[0])
+                #Define plane with those two vectors
+                normal = np.cross(v1, v2)
+                normal = normal / np.linalg.norm(normal)
+                d = -np.dot(normal, kp_points[0])
+                return [normal, d]
+            return None
+
+        def plane_with_normal(kps, normal_kps):
+            if len(kps) >= 2 and check_keypoints(kps) and len(normal_kps) >= 3 and check_keypoints(normal_kps):
+                kp_points = np.array(kps)
+                normal_kps_points = np.array(normal_kps)
+                v1 = np.array(kp_points[1]) - np.array(kp_points[0]) # vector on the plane
+                n_1 = np.array(normal_kps_points[1]) - np.array(normal_kps_points[0]) # vector 1 on coronal plane
+                n_2 = np.array(normal_kps_points[2]) - np.array(normal_kps_points[0]) # vector 2 on coronal plane
+                v2 = np.cross(n_1, n_2) # normal vector to the coronal plane, which is in the other plane
+                print(np.vdot(n_1, v2), np.vdot(n_2, v2)) #check that it worked
+
+                #Define plane with those two vectors
+                normal = np.cross(v1, v2)
+                normal = normal / np.linalg.norm(normal)
+                d = -np.dot(normal, kp_points[0])
+                return [normal, d]
+            return None
+                
+        sagittal_kps = get_valid_keypoints(sagittal_indices)
+        coronal_kps = get_valid_keypoints(coronal_indices)
+        transverse_kps = get_valid_keypoints(transverse_indices)
+        normal_kps = get_valid_keypoints(normal_indices)
+  
+        # Draw Coronal Plane - this is the easiest one to define using the shoulders and pelvis
+        if coronal_kps:     
+            coronal_plane = simple_plane(coronal_kps)
+        else:
+            coronal_plane = None
+
+        # Draw Sagittal Plane - this one is tricky, we will use the spine as a vector on the plane and say the plane is perpendicular to the Coronal Plane
+        if sagittal_kps and normal_kps:
+            sagittal_plane = plane_with_normal(sagittal_kps, normal_kps) 
+        else:
+            sagittal_plane = None
+
+        # Draw Transverse Plane - this one is tricky, we will use the hip as a vector on the plane and say the plane is perpendicular to the Coronal Plane
+        if transverse_kps and normal_kps:
+            transverse_kps = plane_with_normal(transverse_kps, normal_kps)  
+        else:
+            transverse_kps = None
+
+        return coronal_plane, sagittal_plane, transverse_kps
 
     def show_plot(self):
         '''
