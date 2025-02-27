@@ -10,6 +10,8 @@ import tkinter as tk
 # todo: inverse kinematics for the upper body 
 # todo: test angles at wrist, neck and shoulder and add forearm rotation, neck rotation (rotations in general are difficult)
 # todo: ear are not always detected, need to find a way to calculate the neck angle without them
+# todo: velocities and accelerations
+# todo: save min and max for range of motion
 
 
 class JointAnglesPlotter:
@@ -35,7 +37,7 @@ class JointAnglesPlotter:
         self.ax.set_ylabel('Angles (degrees)')
         self.ax.set_title('Joint Angles by Different Methods')
         self.angle_methods = ['cross_product']
-        self.joints = ['left_elbow_flexion/extension', 'right_elbow_flexion/extension', 'neck_flexion/extension', 'neck_lateral_bending' , 'left_wrist_flexion/extension', 'right_wrist_flexion/extension', 'left_wrist_radial/ulnar_deviation', 'right_wrist_radial/ulnar_deviation' ,'left_shoulder_flexion/extension', 'right_shoulder_flexion/extension', 'left_shoulder_abduction/adduction', 'right_shoulder_abduction/adduction','left_shoulder_horizontal_flexion/extension', 'right_shoulder_horizontal_flexion/extension', 'pelvis', 'spine_1', 'spine_2', 'spine_3']
+        self.joints = ['L_Elb_flex/ext', 'R_Elb_flex/ext', 'Neck_flex/ext', 'Neck_lat_bend' , 'L_Wrist_flex/ext', 'R_Wrist_flex/ext', 'L_wrist_rad/uln_dev', 'R_wrist_rad/uln_dev' ,'L_shldr_flex/ext', 'R_shldr_flex/ext', 'L_shldr_abd/add', 'R_shldr_abd/add','L_shldr_horiz_flex/etx', 'R_shldr_horiz_flex/etx', 'pelvis', 'spine_1', 'spine_2', 'spine_3']
         #self.joint_scales = [[0, 160], [0, 160], [-90, 90], [-50, 50] ,[-50, 50], [-50, 50], [-40, 40], [-40, 40], [0, 180], [0 , 180], [0, 180], [0, 270], [0, 180], [0, 180]]
         self.bar_positions = range(len(self.joints) * len(self.angle_methods))
         self.bars = self.ax.bar(self.bar_positions, [0] * len(self.bar_positions), color='blue')
@@ -76,6 +78,7 @@ class JointAnglesPlotter:
             distance_to_plane = np.dot(vector_from_plane, normal_vector)
             projected_point = point - distance_to_plane * normal_vector
             return projected_point
+        
         if plane:
             # Get the plane parameters
             n = plane[0]
@@ -99,6 +102,7 @@ class JointAnglesPlotter:
             angle_rad = np.arccos(dot_product)
             angle_deg = np.degrees(angle_rad)
             return angle_deg
+        
         else:
             return 0
 
@@ -122,6 +126,7 @@ class JointAnglesPlotter:
 
         # Get biomechanical planes
         coronal_plane, sagittal_plane, transverse_plane = self.biomechanical_planes(body)
+        print(coronal_plane)
 
         # Define the functions to calculate the angles
         def calculate_angles(p1, p2, p3, angles, joint_name):
@@ -137,14 +142,14 @@ class JointAnglesPlotter:
         if (body.keypoint[12] is not None and 
             body.keypoint[14] is not None and
             body.keypoint[16] is not None):
-            calculate_angles(body.keypoint[12], body.keypoint[14], body.keypoint[16], angles, 'left_elbow_flexion/extension')
-            calculate_angle_confidence([12, 14, 16], angles_confidence, 'left_elbow_flexion/extension')
+            calculate_angles(body.keypoint[12], body.keypoint[14], body.keypoint[16], angles, 'L_Elb_flex/ext')
+            calculate_angle_confidence([12, 14, 16], angles_confidence, 'L_Elb_flex/ext')
         
         if (body.keypoint[13] is not None and 
             body.keypoint[15] is not None and
             body.keypoint[17] is not None):
-            calculate_angles(body.keypoint[13], body.keypoint[15], body.keypoint[17], angles, 'right_elbow_flexion/extension')
-            calculate_angle_confidence([13, 15, 17], angles_confidence, 'right_elbow_flexion/extension')
+            calculate_angles(body.keypoint[13], body.keypoint[15], body.keypoint[17], angles, 'R_Elb_flex/ext')
+            calculate_angle_confidence([13, 15, 17], angles_confidence, 'R_Elb_flex/ext')
           
         # Neck flexion/extension angle (using middle point between ears, neck, and upper spine) in the sagittal plane
         if (body.keypoint[4] is not None and
@@ -152,8 +157,8 @@ class JointAnglesPlotter:
             body.keypoint[6] is not None and 
             body.keypoint[7] is not None):
             ear_midpoint = (body.keypoint[6] + body.keypoint[7]) / 2
-            calculate_angles_on_plane(ear_midpoint, body.keypoint[4], body.keypoint[3], sagittal_plane, angles, 'neck_flexion/extension')
-            calculate_angle_confidence([6, 4, 3], angles_confidence, 'neck_flexion/extension')
+            calculate_angles_on_plane(ear_midpoint, body.keypoint[4], body.keypoint[3], sagittal_plane, angles, 'Neck_flex/ext')
+            calculate_angle_confidence([6, 4, 3], angles_confidence, 'Neck_flex/ext')
 
         # Neck lateral bending angle (using middle point between ears, neck, and upper spine) in the coronal plane
         if (body.keypoint[4] is not None and
@@ -161,56 +166,56 @@ class JointAnglesPlotter:
             body.keypoint[6] is not None and 
             body.keypoint[7] is not None):
             ear_midpoint = (body.keypoint[6] + body.keypoint[7]) / 2
-            calculate_angles_on_plane(ear_midpoint, body.keypoint[4], body.keypoint[3], coronal_plane, angles, 'neck_lateral_bending')
-            calculate_angle_confidence([6, 4, 3], angles_confidence, 'neck_lateral_bending')
+            calculate_angles_on_plane(ear_midpoint, body.keypoint[4], body.keypoint[3], coronal_plane, angles, 'Neck_lat_bend')
+            calculate_angle_confidence([6, 4, 3], angles_confidence, 'Neck_lat_bend')
 
         # Shoulder angles (between clavicle, shoulder, and elbow) 
-        # On Coronal Plane - DEFINE NAME
+        # On Coronal Plane - abduction and adduction
         if (body.keypoint[14] is not None and 
             body.keypoint[12] is not None and
             body.keypoint[10] is not None):
-            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], coronal_plane, angles, 'left_shoulder_coronal')
-            calculate_angle_confidence([14, 12, 10], angles_confidence, 'left_shoulder_coronal')
+            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], coronal_plane, angles, 'L_shldr_abd/add')
+            calculate_angle_confidence([14, 12, 10], angles_confidence, 'L_shldr_abd/add')
         
         if (body.keypoint[15] is not None and 
             body.keypoint[13] is not None and
             body.keypoint[11] is not None):
-            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], coronal_plane, angles, 'right_shoulder_coronal')
-            calculate_angle_confidence([15, 13, 11], angles_confidence, 'right_shoulder_coronal')
+            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], coronal_plane, angles, 'R_shldr_abd/add')
+            calculate_angle_confidence([15, 13, 11], angles_confidence, 'R_shldr_abd/add')
 
-        # On Sagittal Plane - DEFINE NAME
+        # On Sagittal Plane - flexion and extension
         if (body.keypoint[14] is not None and
             body.keypoint[12] is not None and
             body.keypoint[10] is not None):
-            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], sagittal_plane, angles, 'left_shoulder_sagittal')
-            calculate_angle_confidence([14, 12, 10], angles_confidence, 'left_shoulder_sagittal')
+            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], sagittal_plane, angles, 'L_shldr_flex/ext')
+            calculate_angle_confidence([14, 12, 10], angles_confidence, 'L_shldr_flex/ext')
 
         if (body.keypoint[15] is not None and
             body.keypoint[13] is not None and
             body.keypoint[11] is not None):
-            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], sagittal_plane, angles, 'right_shoulder_sagittal')
-            calculate_angle_confidence([15, 13, 11], angles_confidence, 'right_shoulder_sagittal')
+            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], sagittal_plane, angles, 'R_shldr_flex/ext')
+            calculate_angle_confidence([15, 13, 11], angles_confidence, 'R_shldr_flex/ext')
         
-        # On Transverse Plane - DEFINE NAME
+        # On Transverse Plane - horizontal flexion and extension
         if (body.keypoint[14] is not None and
             body.keypoint[12] is not None and
             body.keypoint[10] is not None):
-            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], transverse_plane, angles, 'left_shoulder_transverse')
-            calculate_angle_confidence([14, 12, 10], angles_confidence, 'left_shoulder_transverse')
+            calculate_angles_on_plane(body.keypoint[14], body.keypoint[12], body.keypoint[10], transverse_plane, angles, 'L_shldr_horiz_flex/etx')
+            calculate_angle_confidence([14, 12, 10], angles_confidence, 'L_shldr_horiz_flex/etx')
         
         if (body.keypoint[15] is not None and
             body.keypoint[13] is not None and
             body.keypoint[11] is not None):
-            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], transverse_plane, angles, 'right_shoulder_transverse')
-            calculate_angle_confidence([15, 13, 11], angles_confidence, 'right_shoulder_transverse')
+            calculate_angles_on_plane(body.keypoint[15], body.keypoint[13], body.keypoint[11], transverse_plane, angles, 'R_shldr_horiz_flex/etx')
+            calculate_angle_confidence([15, 13, 11], angles_confidence, 'R_shldr_horiz_flex/etx')
 
         
-        # Pelvis angles (between middle of hips, pelvis, and lower spine (1))
-        if (body.keypoint[18] is not None and 
-            body.keypoint[19] is not None and
+        # Pelvis angles (between middle of knees, pelvis, and lower spine (1))
+        if (body.keypoint[21] is not None and 
+            body.keypoint[22] is not None and
             body.keypoint[0] is not None and 
             body.keypoint[1] is not None ):
-            hips_midpoint = (body.keypoint[18] + body.keypoint[19]) / 2
+            hips_midpoint = (body.keypoint[21] + body.keypoint[22]) / 2
             calculate_angles(hips_midpoint, body.keypoint[0], body.keypoint[1], angles, 'pelvis')
             calculate_angle_confidence([18, 19, 0, 1], angles_confidence, 'pelvis')
 
@@ -242,8 +247,8 @@ class JointAnglesPlotter:
             body.keypoint[32] is not None and
             body.keypoint[36] is not None):
             fingers_midpoint_left = (body.keypoint[32] + body.keypoint[36]) / 2
-            calculate_angles(body.keypoint[14], body.keypoint[16], fingers_midpoint_left, angles, 'left_wrist_flexion/extension')
-            calculate_angle_confidence([14, 16, 32, 36], angles_confidence, 'left_wrist_flexion/extension')
+            calculate_angles(body.keypoint[14], body.keypoint[16], fingers_midpoint_left, angles, 'L_Wrist_flex/ext')
+            calculate_angle_confidence([14, 16, 32, 36], angles_confidence, 'L_Wrist_flex/ext')
 
         # Calculate right wrist flexion/extension angle - TO TEST
         if (body.keypoint[15] is not None and 
@@ -251,23 +256,23 @@ class JointAnglesPlotter:
             body.keypoint[33] is not None and
             body.keypoint[37] is not None):
             fingers_midpoint_right = (body.keypoint[33] + body.keypoint[37]) / 2
-            calculate_angles(body.keypoint[15], body.keypoint[17], fingers_midpoint_right, angles, 'right_wrist_flexion/extension')
-            calculate_angle_confidence([15, 17, 33, 37], angles_confidence, 'right_wrist_flexion/extension')
+            calculate_angles(body.keypoint[15], body.keypoint[17], fingers_midpoint_right, angles, 'R_Wrist_flex/ext')
+            calculate_angle_confidence([15, 17, 33, 37], angles_confidence, 'R_Wrist_flex/ext')
 
 
         # Calculate left wrist radial/ulnar deviation angle - TO TEST
         if (body.keypoint[14] is not None and 
             body.keypoint[16] is not None and
             body.keypoint[34] is not None):
-            calculate_angles(body.keypoint[14], body.keypoint[16], body.keypoint[34], angles, 'left_wrist_radial/ulnar_deviation')
-            calculate_angle_confidence([14, 16, 34], angles_confidence, 'left_wrist_radial/ulnar_deviation')
+            calculate_angles(body.keypoint[14], body.keypoint[16], body.keypoint[34], angles, 'L_wrist_rad/uln_dev')
+            calculate_angle_confidence([14, 16, 34], angles_confidence, 'L_wrist_rad/uln_dev')
 
         # Calculate right wrist radial/ulnar deviation angle - TO TEST
         if (body.keypoint[15] is not None and 
             body.keypoint[17] is not None and
             body.keypoint[35] is not None):
-            calculate_angles(body.keypoint[15], body.keypoint[17], body.keypoint[35], angles, 'right_wrist_radial/ulnar_deviation')
-            calculate_angle_confidence([15, 17, 35], angles_confidence, 'right_wrist_radial/ulnar_deviation')
+            calculate_angles(body.keypoint[15], body.keypoint[17], body.keypoint[35], angles, 'R_wrist_rad/uln_dev')
+            calculate_angle_confidence([15, 17, 35], angles_confidence, 'R_wrist_rad/uln_dev')
 
         
         return angles, angles_confidence
@@ -315,7 +320,7 @@ class JointAnglesPlotter:
 
 
 
-    def biomechanical_planes(self, body ):
+    def biomechanical_planes(self, body):
         # Define the keypoints for each plane
         sagittal_indices = [0, 3, 2]  # Pelvis, Spine, Spine
         coronal_indices = [11, 10, 0]   # Left Shoulder, Right Shoulder, Pelvis
@@ -324,12 +329,9 @@ class JointAnglesPlotter:
 
         def get_valid_keypoints(indices):
             return [body.keypoint[idx] for idx in indices if body.keypoint_confidence[idx] > 40]
-
-        def check_keypoints(kps):
-            return all(kp[0] > 0 and kp[1] > 0 for kp in kps)
         
         def simple_plane(kps):
-            if len(kps) >= 3 and check_keypoints(kps):
+            if len(kps) >= 3:
                 kp_points = np.array(kps)
                 print(kp_points)
                 v1 = np.array(kp_points[1]) - np.array(kp_points[0])
@@ -342,7 +344,7 @@ class JointAnglesPlotter:
             return None
 
         def plane_with_normal(kps, normal_kps):
-            if len(kps) >= 2 and check_keypoints(kps) and len(normal_kps) >= 3 and check_keypoints(normal_kps):
+            if len(kps) >= 2 and len(normal_kps) >= 3:
                 kp_points = np.array(kps)
                 normal_kps_points = np.array(normal_kps)
                 v1 = np.array(kp_points[1]) - np.array(kp_points[0]) # vector on the plane
