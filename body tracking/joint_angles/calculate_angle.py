@@ -50,6 +50,7 @@ class JointAnglesPlotter:
         self.cmap = LinearSegmentedColormap.from_list('confidence_cmap', ['darkred', 'red', 'orange', 'yellow', 'green', 'darkgreen'])
 
         # Another 3D plot for vectors 
+        '''
         self.fig_3d = plt.figure(figsize=(fig_width, fig_height))
         self.ax_3d = self.fig_3d.add_subplot(111, projection='3d')
         self.ax_3d.set_box_aspect([1,1,1])
@@ -60,6 +61,7 @@ class JointAnglesPlotter:
         self.ax_3d.set_ylabel('Y')
         self.ax_3d.set_zlabel('Z')
         self.ax_3d.set_title('3D Plot of the vectors')
+        '''
 
         # Show the plot
         plt.show()
@@ -146,9 +148,6 @@ class JointAnglesPlotter:
 
         # Get biomechanical planes with respect to origin
         coronal_plane, sagittal_plane, transverse_plane = self.biomechanical_planes(body, origin)
-     
-        # check that the planes are othogonal
-        # print(np.dot(coronal_plane[0], sagittal_plane[0]), np.dot(coronal_plane[0], transverse_plane[0]), np.dot(sagittal_plane[0], transverse_plane[0]))
 
         # Define the functions to calculate the angles
         def calculate_angles(p1, p2, p3, angles, joint_name):
@@ -381,7 +380,6 @@ class JointAnglesPlotter:
             sagittal_plane = plane_with_normal(sagittal_kps, coronal_plane, origin) 
         else:
             sagittal_plane = None
-            sv1 = None
 
         # Draw Transverse Plane - this one is tricky, we will use the hip as a vector on the plane and say the plane is perpendicular to the Coronal Plane
         if transverse_kps and coronal_plane and sagittal_plane:
@@ -391,11 +389,11 @@ class JointAnglesPlotter:
             transverse_plane = None
 
         # Update the 3D plot
-        if coronal_plane and sagittal_plane and transverse_plane:
-            self.update_3d_plot(origin, coronal_plane, 'red', 'Coronal Plane', sagittal_plane , 'blue', 'Sagittal Plane', transverse_plane, 'green', 'Transverse Plane')
+        #if coronal_plane and sagittal_plane and transverse_plane:
+            #self.update_3d_plot(origin, coronal_plane, 'red', 'Coronal Plane', sagittal_plane , 'blue', 'Sagittal Plane', transverse_plane, 'green', 'Transverse Plane')
 
 
-        return coronal_plane, sagittal_plane, transverse_kps
+        return coronal_plane, sagittal_plane, transverse_plane
     
     def update_3d_plot(self, origin, coronal_plane, c_color, c_label, sagittal_plane, s_color, s_label, transverse_plane, t_color, t_label):
         '''
@@ -433,9 +431,9 @@ class JointAnglesPlotter:
         self.ax_3d.set_ylim(-10, 10)
         self.ax_3d.set_zlim(-10, 10)
 
-        print("is c_vector normal to s_vector:", np.dot(c_vector, s_vector))
-        print("is c_vector normal to t_vector:", np.dot(c_vector, t_vector))
-        print("is s_vector normal to t_vector:", np.dot(s_vector, t_vector))
+        #print("is c_vector normal to s_vector:", np.dot(c_vector, s_vector))
+        #print("is c_vector normal to t_vector:", np.dot(c_vector, t_vector))
+        #print("is s_vector normal to t_vector:", np.dot(s_vector, t_vector))
 
         plt.draw()
         plt.pause(0.001)
