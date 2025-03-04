@@ -1,17 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from mpl_toolkits.mplot3d import Axes3D
 import tkinter as tk
 
 # Notes to myself
-# dot product or cross product gives the same angles :)
 # todo: rethink max and min values for the plot, some joints are not in the range 0-180
 # todo: smooth the plot over time to avoid flickering
-# todo: inverse kinematics for the upper body 
 # todo: test angles at wrist, neck and shoulder and add forearm rotation, neck rotation (rotations in general are difficult)
-# todo: ear are not always detected, need to find a way to calculate the neck angle without them
 # todo: velocities and accelerations
 # todo: save min and max for range of motion
+# todo: normal for transverse and sagittal are the same... why??
+# todo: planes defnined by normal and d don't look perpendicular to the other planes and don't seem to be perpendicular to normal vector 
 
 
 class JointAnglesPlotter:
@@ -37,7 +37,7 @@ class JointAnglesPlotter:
         self.ax.set_ylabel('Angles (degrees)')
         self.ax.set_title('Joint Angles by Different Methods')
         self.angle_methods = ['cross_product']
-        self.joints = ['L_Elb_flex/ext', 'R_Elb_flex/ext', 'Neck_flex/ext', 'Neck_lat_bend' , 'L_Wrist_flex/ext', 'R_Wrist_flex/ext','L_shldr_flex/ext', 'R_shldr_flex/ext', 'L_shldr_abd/add', 'R_shldr_abd/add','L_shldr_horiz_flex/etx', 'R_shldr_horiz_flex/etx', 'pelvis']
+        self.joints = ['L_Elb_flex/ext', 'R_Elb_flex/ext', 'Neck_flex/ext', 'Neck_lat_bend' ,'L_shldr_flex/ext', 'R_shldr_flex/ext', 'L_shldr_abd/add', 'R_shldr_abd/add','L_shldr_horiz_flex/etx', 'R_shldr_horiz_flex/etx', 'pelvis']
         #self.joint_scales = [[0, 160], [0, 160], [-90, 90], [-50, 50] ,[-50, 50], [-50, 50], [-40, 40], [-40, 40], [0, 180], [0 , 180], [0, 180], [0, 270], [0, 180], [0, 180]]
         self.bar_positions = range(len(self.joints) * len(self.angle_methods))
         self.bars = self.ax.bar(self.bar_positions, [0] * len(self.bar_positions), color='blue')
@@ -48,8 +48,20 @@ class JointAnglesPlotter:
 
         # Custom colormap from dark red to dark green
         self.cmap = LinearSegmentedColormap.from_list('confidence_cmap', ['darkred', 'red', 'orange', 'yellow', 'green', 'darkgreen'])
-        
 
+        # Another 3D plot for vectors 
+        self.fig_3d = plt.figure(figsize=(fig_width, fig_height))
+        self.ax_3d = self.fig_3d.add_subplot(111, projection='3d')
+        self.ax_3d.set_box_aspect([1,1,1])
+        self.ax_3d.set_xlim(-10, 10)
+        self.ax_3d.set_ylim(-10, 10)
+        self.ax_3d.set_zlim(-10, 10)
+        self.ax_3d.set_xlabel('X')
+        self.ax_3d.set_ylabel('Y')
+        self.ax_3d.set_zlabel('Z')
+        self.ax_3d.set_title('3D Plot of the vectors')
+
+        # Show the plot
         plt.show()
 
 
@@ -74,6 +86,7 @@ class JointAnglesPlotter:
         '''
         # Function to project a point onto the plane
         def project_point_onto_plane(point, d, n):
+            # define origin point on the plane!!!!
             n_norm = n / np.linalg.norm(n)
             proj_of_point_on_n = np.dot(point, n) * n_norm
             return point - proj_of_point_on_n
@@ -125,8 +138,15 @@ class JointAnglesPlotter:
         angles = {method: {} for method in self.angle_methods}
         angles_confidence = {method: {} for method in self.angle_methods}
 
-        # Get biomechanical planes
-        coronal_plane, sagittal_plane, transverse_plane = self.biomechanical_planes(body)
+        # Set origin or center of the body
+        if body.keypoint[3] is not None:
+            origin = body.keypoint[3]
+        else:
+            origin = np.array([0, 0, 0])
+
+        # Get biomechanical planes with respect to origin
+        coronal_plane, sagittal_plane, transverse_plane = self.biomechanical_planes(body, origin)
+     
         # check that the planes are othogonal
         # print(np.dot(coronal_plane[0], sagittal_plane[0]), np.dot(coronal_plane[0], transverse_plane[0]), np.dot(sagittal_plane[0], transverse_plane[0]))
 
@@ -221,22 +241,22 @@ class JointAnglesPlotter:
             calculate_angle_confidence([21, 22, 0, 2], angles_confidence, 'pelvis')
 
         # Calculate left wrist flexion/extension angle - OK - change scale to [-90; 90]
-        if (body.keypoint[14] is not None and 
-            body.keypoint[16] is not None and
-            body.keypoint[32] is not None and
-            body.keypoint[36] is not None):
-            fingers_midpoint_left = (body.keypoint[32] + body.keypoint[36]) / 2
-            calculate_angles(body.keypoint[14], body.keypoint[16], fingers_midpoint_left, angles, 'L_Wrist_flex/ext')
-            calculate_angle_confidence([14, 16, 32, 36], angles_confidence, 'L_Wrist_flex/ext')
+        #if (body.keypoint[14] is not None and 
+        #    body.keypoint[16] is not None and
+        #    body.keypoint[32] is not None and
+        #    body.keypoint[36] is not None):
+        #    fingers_midpoint_left = (body.keypoint[32] + body.keypoint[36]) / 2
+        #    calculate_angles(body.keypoint[14], body.keypoint[16], fingers_midpoint_left, angles, 'L_Wrist_flex/ext')
+        #    calculate_angle_confidence([14, 16, 32, 36], angles_confidence, 'L_Wrist_flex/ext')
 
         # Calculate right wrist flexion/extension angle - OK - change scale to [-90; 90]
-        if (body.keypoint[15] is not None and 
-            body.keypoint[17] is not None and
-            body.keypoint[33] is not None and
-            body.keypoint[37] is not None):
-            fingers_midpoint_right = (body.keypoint[33] + body.keypoint[37]) / 2
-            calculate_angles(body.keypoint[15], body.keypoint[17], fingers_midpoint_right, angles, 'R_Wrist_flex/ext')
-            calculate_angle_confidence([15, 17, 33, 37], angles_confidence, 'R_Wrist_flex/ext')
+        #if (body.keypoint[15] is not None and 
+        #    body.keypoint[17] is not None and
+        #    body.keypoint[33] is not None and
+        #    body.keypoint[37] is not None):
+        #    fingers_midpoint_right = (body.keypoint[33] + body.keypoint[37]) / 2
+        #    calculate_angles(body.keypoint[15], body.keypoint[17], fingers_midpoint_right, angles, 'R_Wrist_flex/ext')
+        #    calculate_angle_confidence([15, 17, 33, 37], angles_confidence, 'R_Wrist_flex/ext')
 
 
         # Calculate left wrist radial/ulnar deviation angle - TO DO
@@ -299,76 +319,135 @@ class JointAnglesPlotter:
 
 
 
-    def biomechanical_planes(self, body):
+    def biomechanical_planes(self, body, origin):
+
         # Define the keypoints for each plane
-        sagittal_indices = [1, 2, 3]  # Spine, Spine, Spine
-        coronal_indices = [11, 10, 1]   # Left Shoulder, Right Shoulder, Spine
-        transverse_indices = [11, 10, 4]  # Left Shoulder, Right Shoulder, Neck
-        normal_indices = [4, 11, 3]  # Neck, Soulder, Spine
+        sagittal_indices = [3, 2, 1]  # Spine, Spine, Spine
+        coronal_indices = [10, 11, 1]   # Left clavicle, Right Shoulder, Spine
+        transverse_indices = [11, 12, 10]  # Left Shoulder, Right Shoulder, Neck
 
         def get_valid_keypoints(indices):
             return [body.keypoint[idx] for idx in indices if body.keypoint_confidence[idx] > 40]
         
-        def simple_plane(kps):
+        def simple_plane(kps, origin):
             if len(kps) >= 3:
                 kp_points = np.array(kps)
-                #print(kp_points)
-                v1 = np.array(kp_points[1]) - np.array(kp_points[0])
+                v1 = np.array(kp_points[1]) - np.array(kp_points[0]) # vector at 0 0 0
                 v2 = np.array(kp_points[2]) - np.array(kp_points[0])
+                v1 = v1 + origin # vector at the origin
+                v2 = v2 + origin
                 #Define plane with those two vectors
-                normal = np.cross(v1, v2)
+                normal = np.cross(v1, v2) # should be at the origin
                 normal = normal / np.linalg.norm(normal)
-                d = -np.dot(normal, kp_points[0])
+                d = -kp_points[0].dot(normal)
                 return [normal, d]
             return None
 
-        def plane_with_normal(kps, normal_kps):
-            if len(kps) >= 2 and len(normal_kps) >= 3:
+        def plane_with_normal(kps, coronal_plane, origin):
+            if len(kps) >= 2:
                 kp_points = np.array(kps)
-                normal_kps_points = np.array(normal_kps)
-                v1 = np.array(kp_points[1]) - np.array(kp_points[0]) # vector on the plane
-                n_1 = np.array(normal_kps_points[1]) - np.array(normal_kps_points[0]) # vector 1 on coronal plane
-                n_2 = np.array(normal_kps_points[2]) - np.array(normal_kps_points[0]) # vector 2 on coronal plane
-                v2 = np.cross(n_1, n_2) # normal vector to the coronal plane, which is in the other plane
-                #print(np.vdot(n_1, v2), np.vdot(n_2, v2)) #check that it worked
-
+                v1 = np.array(kp_points[2]) - np.array(kp_points[0]) # vector on the plane
+                v1 = v1 + origin # vector at the origin
+                v2 = coronal_plane[0] # normal vector to the coronal plane, which is in the other plane
                 #Define plane with those two vectors
-                normal = np.cross(v1, v2)
+                normal = np.cross(v1, v2) # should be at the origin
                 normal = normal / np.linalg.norm(normal)
-                d = -np.dot(normal, kp_points[0])
+                d = -kp_points[1].dot(normal)
                 return [normal, d]
             return None
+        
+        def plane_double_normal(coronal_plane, sagittal_plane, origin):
+            n1 = coronal_plane[0]
+            n2 = sagittal_plane[0] 
+            normal = np.cross(n1, n2)
+            normal = normal / np.linalg.norm(normal)
+            point_on_plane = origin 
+            d = -point_on_plane.dot(normal)
+            return [normal, d]
                 
         sagittal_kps = get_valid_keypoints(sagittal_indices)
         coronal_kps = get_valid_keypoints(coronal_indices)
         transverse_kps = get_valid_keypoints(transverse_indices)
-        normal_kps = get_valid_keypoints(normal_indices)
   
-        # Draw Coronal Plane - this is the easiest one to define using the shoulders and pelvis
+        # Draw Coronal Plane - this is the easiest one to define using the shoulders and pelvis, with origin at the center
         if coronal_kps:     
-            coronal_plane = simple_plane(coronal_kps)
+            coronal_plane = simple_plane(coronal_kps, origin)
         else:
             coronal_plane = None
+        
 
         # Draw Sagittal Plane - this one is tricky, we will use the spine as a vector on the plane and say the plane is perpendicular to the Coronal Plane
-        if sagittal_kps and normal_kps:
-            sagittal_plane = plane_with_normal(sagittal_kps, normal_kps) 
+        if sagittal_kps and coronal_plane:
+            sagittal_plane = plane_with_normal(sagittal_kps, coronal_plane, origin) 
         else:
             sagittal_plane = None
+            sv1 = None
 
         # Draw Transverse Plane - this one is tricky, we will use the hip as a vector on the plane and say the plane is perpendicular to the Coronal Plane
-        if transverse_kps and normal_kps:
-            transverse_kps = plane_with_normal(transverse_kps, normal_kps)  
+        if transverse_kps and coronal_plane and sagittal_plane:
+            #transverse_plane, tv1 = plane_with_normal(transverse_kps, coronal_plane, origin)  
+            transverse_plane = plane_double_normal(coronal_plane, sagittal_plane, origin)
         else:
-            transverse_kps = None
+            transverse_plane = None
+
+        # Update the 3D plot
+        if coronal_plane and sagittal_plane and transverse_plane:
+            self.update_3d_plot(origin, coronal_plane, 'red', 'Coronal Plane', sagittal_plane , 'blue', 'Sagittal Plane', transverse_plane, 'green', 'Transverse Plane')
+
 
         return coronal_plane, sagittal_plane, transverse_kps
+    
+    def update_3d_plot(self, origin, coronal_plane, c_color, c_label, sagittal_plane, s_color, s_label, transverse_plane, t_color, t_label):
+        '''
+        Update the 3D plot with the new vector.
+        '''
+        # first delete previous vectors if the label is the same
+        self.ax_3d.clear()
+
+        grid_range = np.linspace(-10, 10, 10)
+        plot_size = 20
+        
+        # then new planes
+        # coronal plane
+        c_vector, c_point = coronal_plane
+        cx, cy = np.meshgrid(grid_range, grid_range)
+        cz = (-c_vector[0] * cx - c_vector[1] * cy - c_point) /c_vector[2]
+        self.ax_3d.plot_surface(cx, cy, cz, color=c_color, alpha=0.5, label=c_label)
+        # and the normal 
+        self.ax_3d.quiver(origin[0], origin[1], origin[2], c_vector[0], c_vector[1], c_vector[2], color=c_color, label='normal', length=plot_size)
+        # sagittal plane
+        s_vector, s_point = sagittal_plane
+        sx, sy = np.meshgrid(grid_range, grid_range)
+        sz = (-s_vector[0] * sx - s_vector[1] * sy - s_point) /s_vector[2]
+        self.ax_3d.plot_surface(sx, sy, sz, color=s_color, alpha=0.5, label=s_label)
+        self.ax_3d.quiver(origin[0], origin[1], origin[2], s_vector[0], s_vector[1], s_vector[2], color=s_color, label='normal', length=plot_size)
+        # transverse plane
+        t_vector, t_point = transverse_plane
+        tx, ty = np.meshgrid(grid_range, grid_range)
+        tz = (-t_vector[0] * tx - t_vector[1] * ty - t_point) /t_vector[2] 
+        self.ax_3d.plot_surface(tx, ty, tz, color=t_color, alpha=0.5, label=t_label)
+        self.ax_3d.quiver(origin[0], origin[1], origin[2], t_vector[0], t_vector[1], t_vector[2], color=t_color, label='normal', length=plot_size)
+
+        self.ax_3d.set_box_aspect([1,1,1])
+        self.ax_3d.set_xlim(-10, 10)
+        self.ax_3d.set_ylim(-10, 10)
+        self.ax_3d.set_zlim(-10, 10)
+
+        print("is c_vector normal to s_vector:", np.dot(c_vector, s_vector))
+        print("is c_vector normal to t_vector:", np.dot(c_vector, t_vector))
+        print("is s_vector normal to t_vector:", np.dot(s_vector, t_vector))
+
+        plt.draw()
+        plt.pause(0.001)
+
+    
 
     def show_plot(self):
         '''
         Continuously update plot in its own window.
         '''
-        plt.ion
+        plt.ion()
+
         plt.show()
 
     def close_plot(self):

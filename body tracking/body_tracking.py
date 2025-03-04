@@ -98,8 +98,8 @@ def main():
     
     body_param = sl.BodyTrackingParameters()
     body_param.enable_tracking = True                # Track people across images flow
-    body_param.enable_body_fitting = False            # Smooth skeleton move
-    body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_FAST 
+    body_param.enable_body_fitting = False            # Smooth skeleton move (True later!)
+    body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_FAST
     body_param.body_format = sl.BODY_FORMAT.BODY_38  # Choose the BODY_FORMAT you wish to use 18, 34 or 38
 
     # Enable Object Detection module
@@ -120,6 +120,9 @@ def main():
     viewer.init(camera_info.camera_configuration.calibration_parameters.left_cam, body_param.enable_tracking,body_param.body_format)
     # Create ZED objects filled in the main loop
     bodies = sl.Bodies()
+    # grab runtime parameters
+    runtime_params = sl.RuntimeParameters()
+    runtime_params.measure3D_reference_frame = sl.REFERENCE_FRAME.WORLD
     image = sl.Mat()
     key_wait = 10 
     # Initialize angle calculation and plot
