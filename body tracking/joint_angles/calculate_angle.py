@@ -50,18 +50,18 @@ class JointAnglesPlotter:
         self.cmap = LinearSegmentedColormap.from_list('confidence_cmap', ['darkred', 'red', 'orange', 'yellow', 'green', 'darkgreen'])
 
         # Another 3D plot for vectors 
-        '''
+        
         self.fig_3d = plt.figure(figsize=(fig_width, fig_height))
         self.ax_3d = self.fig_3d.add_subplot(111, projection='3d')
         self.ax_3d.set_box_aspect([1,1,1])
-        self.ax_3d.set_xlim(-10, 10)
-        self.ax_3d.set_ylim(-10, 10)
-        self.ax_3d.set_zlim(-10, 10)
+        self.ax_3d.set_xlim(-1, 1)
+        self.ax_3d.set_ylim(-1, 1)
+        self.ax_3d.set_zlim(-1, 1)
         self.ax_3d.set_xlabel('X')
         self.ax_3d.set_ylabel('Y')
         self.ax_3d.set_zlabel('Z')
-        self.ax_3d.set_title('3D Plot of the vectors')
-        '''
+        self.ax_3d.set_title('3D Plot of the vectors - red: coronal, blue: sagittal, green: transverse')
+        
 
         # Show the plot
         plt.show()
@@ -389,20 +389,20 @@ class JointAnglesPlotter:
             transverse_plane = None
 
         # Update the 3D plot
-        #if coronal_plane and sagittal_plane and transverse_plane:
-            #self.update_3d_plot(origin, coronal_plane, 'red', 'Coronal Plane', sagittal_plane , 'blue', 'Sagittal Plane', transverse_plane, 'green', 'Transverse Plane')
+        if coronal_plane and sagittal_plane and transverse_plane:
+            self.update_3d_plot(origin, body, coronal_plane, 'red', 'Coronal Plane', sagittal_plane , 'blue', 'Sagittal Plane', transverse_plane, 'green', 'Transverse Plane')
 
 
         return coronal_plane, sagittal_plane, transverse_plane
     
-    def update_3d_plot(self, origin, coronal_plane, c_color, c_label, sagittal_plane, s_color, s_label, transverse_plane, t_color, t_label):
+    def update_3d_plot(self, origin, body, coronal_plane, c_color, c_label, sagittal_plane, s_color, s_label, transverse_plane, t_color, t_label):
         '''
         Update the 3D plot with the new vector.
         '''
         # first delete previous vectors if the label is the same
         self.ax_3d.clear()
 
-        grid_range = np.linspace(-10, 10, 10)
+        grid_range = np.linspace(-1, 1, 20)
         plot_size = 20
         
         # then new planes
@@ -427,13 +427,20 @@ class JointAnglesPlotter:
         self.ax_3d.quiver(origin[0], origin[1], origin[2], t_vector[0], t_vector[1], t_vector[2], color=t_color, label='normal', length=plot_size)
 
         self.ax_3d.set_box_aspect([1,1,1])
-        self.ax_3d.set_xlim(-10, 10)
-        self.ax_3d.set_ylim(-10, 10)
-        self.ax_3d.set_zlim(-10, 10)
+        self.ax_3d.set_xlim(-1, 1)
+        self.ax_3d.set_ylim(-1, 1)
+        self.ax_3d.set_zlim(-1, 1)
 
         #print("is c_vector normal to s_vector:", np.dot(c_vector, s_vector))
         #print("is c_vector normal to t_vector:", np.dot(c_vector, t_vector))
         #print("is s_vector normal to t_vector:", np.dot(s_vector, t_vector))
+
+        # Add the skeletion keypoints 
+        ## check the aligjment of the keypoints in 3D!
+        keypoints = body.keypoint
+        for i in [3, 2, 1]:
+            if keypoints[i] is not None:
+                self.ax_3d.scatter(keypoints[i][0], keypoints[i][1], keypoints[i][2], color='black')
 
         plt.draw()
         plt.pause(0.001)
