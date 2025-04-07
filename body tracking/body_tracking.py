@@ -30,6 +30,9 @@ import cv_viewer.tracking_viewer as cv_viewer
 from joint_angles.calculate_angle import JointAnglesPlotter
 import numpy as np
 import argparse
+import csv
+import os
+from datetime import datetime
 
 def parse_args(init):
     if len(opt.input_svo_file)>0 and opt.input_svo_file.endswith(".svo"):
@@ -126,8 +129,24 @@ def main():
     image = sl.Mat()
     key_wait = 10 
     # Initialize angle calculation and plot
-    angle_plotter = JointAnglesPlotter()
-    angle_plotter.show_plot()
+    #angle_plotter = JointAnglesPlotter()
+    #angle_plotter.show_plot()
+
+    # Create a CSV file to save the keypoints
+    now = datetime.now()
+    file_name = 'keypoints_'+ now.strftime("%m_%d_%Y_%H_%M_%S") +'.csv'
+    if os.path.exists(file_name):
+        print("File already exists. Exiting...")
+        exit()
+    else:
+        print("Creating file: ",file_name)
+        csv_file = open(file_name, 'w', newline='')
+        csv_writer = csv.writer(csv_file)
+    # Write the header row
+    csv_writer.writerow(['Timestamp','Keypoint Name', 'X', 'Y', 'Z', 'Confidence'])
+    # Create a list of keypoint names
+    keypoint_names = ['PELVIS', 'SPINE_1', 'SPINE_2', 'SPINE_3', 'NECK', 'NOSE', 'LEFT_EYE', 'RIGHT_EYE', 'LEFT_EAR', 'RIGHT_EAR', 'LEFT_CLAVICLE', 'RIGHT_CLAVICLE', 'LEFT_SHOULDER', 'RIGHT_SHOULDER', 'LEFT_ELBOW', 'RIGHT_ELBOW', 'LEFT_WRIST', 'RIGHT_WRIST', 'LEFT_HIP', 'RIGHT_HIP', 'LEFT_KNEE', 'RIGHT_KNEE', 'LEFT_ANKLE', 'RIGHT_ANKLE', 'LEFT_BIG_TOE', 'RIGHT_BIG_TOE', 'LEFT_SMALL_TOE', 'RIGHT_SMALL_TOE', 'LEFT_HEEL', 'RIGHT_HEEL', 'LEFT_HAND_THUMB_4', 'RIGHT_HAND_THUMB_4', 'LEFT_HAND_INDEX_1', 'RIGHT_HAND_INDEX_1', 'LEFT_HAND_MIDDLE_4', 'RIGHT_HAND_MIDDLE_4', 'LEFT_HAND_PINKY_1', 'RIGHT_HAND_PINKY_1']
+
     while viewer.is_available():
         # Grab an image
         if zed.grab() == sl.ERROR_CODE.SUCCESS:
@@ -141,11 +160,22 @@ def main():
             image_left_ocv = image.get_data()
             cv_viewer.render_2D(image_left_ocv,image_scale, bodies.body_list, body_param.enable_tracking, body_param.body_format)
             cv2.imshow("ZED | 2D View", image_left_ocv)
-            # Get joint angles
-            if len(bodies.body_list) > 0:
-                body = bodies.body_list[0]
-                angles, angles_confidence = angle_plotter.get_joint_angles(body)
-                angle_plotter.update_plot(angles, angles_confidence)
+            # Write in csv
+            #if len(bodies.body_list) > 0:
+            #    body = bodies.body_list[0]
+            #    timestamp = bodies.timestamp.get_milliseconds()
+            #    # write keypoint name and coordinates in csv file 
+            #    for i, keypoint in enumerate(body.keypoint):
+            #        # Write the keypoint name and coordinates to the CSV file
+            #        csv_writer.writerow([timestamp, keypoint_names[i], keypoint[0], keypoint[1], keypoint[2], body.keypoint_confidence[i]])
+
+
+
+
+
+            #    body = bodies.body_list[0]
+            #    angles, angles_confidence = angle_plotter.get_joint_angles(body)
+            #    angle_plotter.update_plot(angles, angles_confidence)
 
             key = cv2.waitKey(key_wait)
             if key == 113: # for 'q' key
@@ -158,7 +188,7 @@ def main():
                 else : 
                     print("Restart")
                     key_wait = 10 
-    angle_plotter.close_plot()
+    #angle_plotter.close_plot()
     viewer.exit()
     image.free(sl.MEM.CPU)
     zed.disable_body_tracking()
