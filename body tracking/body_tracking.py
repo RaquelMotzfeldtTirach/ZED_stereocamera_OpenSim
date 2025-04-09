@@ -33,6 +33,8 @@ import argparse
 import csv
 import os
 from datetime import datetime
+import threading
+import queue
 
 def parse_args(init):
     if len(opt.input_svo_file)>0 and opt.input_svo_file.endswith(".svo"):
@@ -71,7 +73,20 @@ def parse_args(init):
     else : 
         print("[Sample] Using default resolution")
 
+# Create a queue for passing data to the CSV writer thread
+csv_queue = queue.Queue()
 
+def csv_writer_thread(file_name):
+    """Worker thread function to write data to the CSV file."""
+    with open(file_name, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        # Write the header row
+        writer.writerow(['Timestamp', 'Keypoint Name', 'X', 'Y', 'Z', 'Confidence'])
+        while True:
+            data = csv_queue.get()
+            if data is None:  # Sentinel value to exit the thread
+                break
+            writer.writerows(data)
 
 def main():
     print("Running Body Tracking sample ... Press 'q' to quit, or 'm' to pause or restart")
@@ -81,7 +96,7 @@ def main():
 
     # Create a InitParameters object and set configuration parameters
     init_params = sl.InitParameters()
-    init_params.camera_resolution = sl.RESOLUTION.HD1080  # Use HD1080 video mode
+    init_params.camera_resolution = sl.RESOLUTION.HD720  # Use HD1080 video mode
     init_params.coordinate_units = sl.UNIT.METER          # Set coordinate units
     init_params.depth_mode = sl.DEPTH_MODE.ULTRA
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
@@ -101,7 +116,7 @@ def main():
     
     body_param = sl.BodyTrackingParameters()
     body_param.enable_tracking = True                # Track people across images flow
-    body_param.enable_body_fitting = False            # Smooth skeleton move (True later!)
+    body_param.enable_body_fitting = True            # Smooth skeleton move (True later!)
     body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_FAST
     body_param.body_format = sl.BODY_FORMAT.BODY_38  # Choose the BODY_FORMAT you wish to use 18, 34 or 38
 
@@ -127,7 +142,7 @@ def main():
     runtime_params = sl.RuntimeParameters()
     runtime_params.measure3D_reference_frame = sl.REFERENCE_FRAME.WORLD
     image = sl.Mat()
-    key_wait = 10 
+    key_wait = 1 
     # Initialize angle calculation and plot
     #angle_plotter = JointAnglesPlotter()
     #angle_plotter.show_plot()
@@ -135,17 +150,14 @@ def main():
     # Create a CSV file to save the keypoints
     now = datetime.now()
     file_name = 'keypoints_'+ now.strftime("%m_%d_%Y_%H_%M_%S") +'.csv'
-    if os.path.exists(file_name):
-        print("File already exists. Exiting...")
-        exit()
-    else:
-        print("Creating file: ",file_name)
-        csv_file = open(file_name, 'w', newline='')
-        csv_writer = csv.writer(csv_file)
-    # Write the header row
-    csv_writer.writerow(['Timestamp','Keypoint Name', 'X', 'Y', 'Z', 'Confidence'])
+    print("Creating file: ",file_name)
+    # Start the CSV writer thread
+    csv_thread = threading.Thread(target=csv_writer_thread, args=(file_name,))
+    csv_thread.start()
+       
     # Create a list of keypoint names
     keypoint_names = ['PELVIS', 'SPINE_1', 'SPINE_2', 'SPINE_3', 'NECK', 'NOSE', 'LEFT_EYE', 'RIGHT_EYE', 'LEFT_EAR', 'RIGHT_EAR', 'LEFT_CLAVICLE', 'RIGHT_CLAVICLE', 'LEFT_SHOULDER', 'RIGHT_SHOULDER', 'LEFT_ELBOW', 'RIGHT_ELBOW', 'LEFT_WRIST', 'RIGHT_WRIST', 'LEFT_HIP', 'RIGHT_HIP', 'LEFT_KNEE', 'RIGHT_KNEE', 'LEFT_ANKLE', 'RIGHT_ANKLE', 'LEFT_BIG_TOE', 'RIGHT_BIG_TOE', 'LEFT_SMALL_TOE', 'RIGHT_SMALL_TOE', 'LEFT_HEEL', 'RIGHT_HEEL', 'LEFT_HAND_THUMB_4', 'RIGHT_HAND_THUMB_4', 'LEFT_HAND_INDEX_1', 'RIGHT_HAND_INDEX_1', 'LEFT_HAND_MIDDLE_4', 'RIGHT_HAND_MIDDLE_4', 'LEFT_HAND_PINKY_1', 'RIGHT_HAND_PINKY_1']
+    interesting_keypoints = [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
     while viewer.is_available():
         # Grab an image
@@ -155,22 +167,21 @@ def main():
             # Retrieve bodies
             zed.retrieve_bodies(bodies, body_runtime_param)
             # Update GL view
-            viewer.update_view(image, bodies) 
+            # viewer.update_view(image, bodies) 
             # Update OCV view
             image_left_ocv = image.get_data()
             cv_viewer.render_2D(image_left_ocv,image_scale, bodies.body_list, body_param.enable_tracking, body_param.body_format)
             cv2.imshow("ZED | 2D View", image_left_ocv)
             # Write in csv
-            #if len(bodies.body_list) > 0:
-            #    body = bodies.body_list[0]
-            #    timestamp = bodies.timestamp.get_milliseconds()
-            #    # write keypoint name and coordinates in csv file 
-            #    for i, keypoint in enumerate(body.keypoint):
-            #        # Write the keypoint name and coordinates to the CSV file
-            #        csv_writer.writerow([timestamp, keypoint_names[i], keypoint[0], keypoint[1], keypoint[2], body.keypoint_confidence[i]])
-
-
-
+            if bodies.body_list:
+                body = bodies.body_list[0]
+                timestamp = bodies.timestamp.get_milliseconds()
+                # Prepare data for the CSV writer thread
+                data = [
+                    [timestamp, keypoint_names[i], keypoint[0], keypoint[1], keypoint[2], body.keypoint_confidence[i]]
+                    for i, keypoint in enumerate(body.keypoint) if i in interesting_keypoints
+                ]
+                csv_queue.put(data)  # Add data to the queue
 
 
             #    body = bodies.body_list[0]
