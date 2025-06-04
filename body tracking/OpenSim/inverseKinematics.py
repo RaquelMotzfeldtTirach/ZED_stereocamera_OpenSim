@@ -1,9 +1,10 @@
 import opensim as osim
 import matplotlib.pyplot as plt
 import numpy as np
+import shutil
 
 # Create an IK object using the configuration file.
-inverse_kinematics_tool = osim.InverseKinematicsTool('subject01_Setup_IK.xml')
+inverse_kinematics_tool = osim.InverseKinematicsTool('OpenSim/IK_setup.xml')
 
 # Print some information of the config file to check that everything is correct.
 print("Name:", inverse_kinematics_tool.getName())
@@ -23,11 +24,17 @@ for i in range(task_set.getSize()):
   print(task.getWeight())
   print()
 
+inverse_kinematics_tool.set_output_motion_file('../recordings/IK/subject02_static.mot') #it works! see https://simtk.org/api_docs/opensim/api_docs/classOpenSim_1_1InverseKinematicsToolBase.html#a821ff5a40673066945aa92f52227292b
+
 # Run Inverse Kinematics Tool
 inverse_kinematics_tool.run()
 
+# Move error file to IK directory 
+shutil.move('OpenSim/subject01_ik_marker_errors.sto', 'recordings/IK/subject01_ik_marker_errors.sto')
+
+
 # Use the TableProcessor to read the motion file.
-table = osim.TableProcessor("subject01_ik_marker_errors.sto")
+table = osim.TableProcessor('recordings/IK/subject01_ik_marker_errors.sto')
 # Process the file.
 tableErrors = table.process()
 # Print labels for each column.
@@ -54,3 +61,5 @@ axs.legend()
 
 # Set the spacing between subplots
 plt.subplots_adjust(wspace=0.5, hspace=0.5)
+# Show the plot.
+plt.show()

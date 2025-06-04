@@ -5,7 +5,7 @@ rajagopal = osim.Model('OpenSim/models/Rajagopal/Rajagopal_2015.osim')
 print("Name of the model:", rajagopal.getName())
 
 # Create a ScaleTool object using the configuration file.
-scale_tool = osim.ScaleTool('rajagopal_Setup_Scale.xml')
+scale_tool = osim.ScaleTool('OpenSim/scaling_setup.xml')
 
 # Print some information of the config file to test everything is correct.
 print("Name:", scale_tool.getName())
