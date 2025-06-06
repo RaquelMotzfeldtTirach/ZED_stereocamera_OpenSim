@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import shutil
 
+
+
 # Create an IK object using the configuration file.
 inverse_kinematics_tool = osim.InverseKinematicsTool('OpenSim/IK_setup.xml')
 

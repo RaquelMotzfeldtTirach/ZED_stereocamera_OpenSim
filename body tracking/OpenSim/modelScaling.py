@@ -1,27 +1,85 @@
 import opensim as osim
+import xml.etree.ElementTree as ET
 
-# Load the model.
-rajagopal = osim.Model('OpenSim/models/Rajagopal/Rajagopal_2015.osim')
-print("Name of the model:", rajagopal.getName())
+def load_model(model_path):
+    """Load the OpenSim model."""
+    model = osim.Model(model_path)
+    print("Name of the model:", model.getName())
+    return model
 
-# Create a ScaleTool object using the configuration file.
-scale_tool = osim.ScaleTool('OpenSim/scaling_setup.xml')
+def create_config_file(config_template_path):
+    tree = ET.parse(config_template_path)
+    root = tree.getroot()
+    for tag in root.iter('ScaleTool'):
+        tag.find('mass').text = '70.0'  # Set subject mass
 
-# Print some information of the config file to test everything is correct.
-print("Name:", scale_tool.getName())
-print("Subject Mass:", scale_tool.getSubjectMass())
-print("Subject Height:", scale_tool.getSubjectHeight())
-print("Notes:", scale_tool.getPropertyByName("notes").toString())
-print()
+    new_file_path = 'recordings/subject01/scaling_setup.xml'
+    tree.write(new_file_path, encoding='utf-8', xml_declaration=True)
+    return new_file_path
 
-# Get model marker file name.
-generic_model_maker = scale_tool.getGenericModelMaker()
-print("Marker Set File Name:", generic_model_maker.getMarkerSetFileName())
-print()
+def create_scale_tool(config_path):
+    """Create a ScaleTool object using the configuration file."""
+    scale_tool = osim.ScaleTool(config_path)
+    return scale_tool
 
-# Get marker file name.
-marker_placer = scale_tool.getMarkerPlacer()
-print("Marker Placer File Name:", marker_placer.getMarkerFileName())
+def print_scale_tool_info(scale_tool):
+    """Print relevant information from the ScaleTool object."""
+    print("Name:", scale_tool.getName())
+    print("Subject Mass:", scale_tool.getSubjectMass())
+    print("Subject Height:", scale_tool.getSubjectHeight())
+    print("Notes:", scale_tool.getPropertyByName("notes").toString())
+    print()
 
-# Run Scale Tool.
-scale_tool.run()
+def print_marker_file_names(scale_tool):
+    """Print the marker set and marker file names."""
+    generic_model_maker = scale_tool.getGenericModelMaker()
+    print("Marker Set File Name:", generic_model_maker.getMarkerSetFileName())
+    print()
+
+    marker_placer = scale_tool.getMarkerPlacer()
+    print("Marker Placer File Name:", marker_placer.getMarkerFileName())
+
+def run_scaling(scale_tool):
+    """Run the Scale Tool."""
+    scale_tool.run()
+    print("Scaling completed.")
+
+def main():
+    """Main entry point of the script."""
+    model_path = 'OpenSim/models/Rajagopal/Rajagopal_2015.osim'
+    config_template_path = 'OpenSim/scaling_setup_template.xml'
+
+    # Load the model
+    model = load_model(model_path)
+
+    # Get subject information
+    subject_ID = input("Enter subject ID: ")
+    subject_mass = input("Enter subject mass (kg): ")
+    subject_height = input("Enter subject height (mm): ")
+    subject_age = input("Enter subject age (years): ")
+    static_trial_path = input("Enter static trial file path: ")
+
+    output_model_file = "models/Rajagopal_scaled_subject"+subject_ID+".osim"
+
+
+
+
+    # Create our own config file
+    config_path = create_config_file(config_template_path, subject_ID, subject_mass, subject_height, subject_age, static_trial_path, output_model_file)
+    print("Configuration file created at:", config_path)
+
+    # Create and configure the Scale Tool
+    #scale_tool = create_scale_tool(config_path)
+
+    # Print Scale Tool information
+    #print_scale_tool_info(scale_tool)
+
+    # Print Marker file names
+    #print_marker_file_names(scale_tool)
+
+    # Run the Scale Tool
+    #run_scaling(scale_tool)
+
+
+if __name__ == "__main__":
+    main()

@@ -58,7 +58,7 @@ def process_transformed_csv(file_path):
     joint_line = "Frame#\tTime\t" + "\t\t\t".join(joint[0] for joint in joint_map)
     coords_line = "\t".join(f'{axis}{i+1}' for i in range(len(joint_map)) for axis in xyz)
 
-    output_file_name = f"skeleton_{os.path.basename(file_path).replace('transformed_', '').replace('.csv', '')}.trc"
+    output_file_name = f"{os.path.basename(file_path).replace('transformed_', '').replace('.csv', '')}.trc"
 
 
     header = (
@@ -74,6 +74,10 @@ def process_transformed_csv(file_path):
         f.writelines(lines)
     
     print(f"File written: {output_file_name}")
+    # Inform the user about the start and end timestamp 
+    start_time = df['Timestamp'].iloc[0] / 1000.0  # Convert milliseconds to seconds
+    end_time = df['Timestamp'].iloc[-1] / 1000.0  # Convert milliseconds to seconds
+    print(f"Start time: {start_time:.6f} seconds, End time: {end_time:.6f} seconds")
 
 def main(folder_path):
     # List all CSV files that start with "transformed"

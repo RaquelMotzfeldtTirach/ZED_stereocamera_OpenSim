@@ -153,9 +153,10 @@ def main():
     image = sl.Mat()
     key_wait = 1 
 
-    # Create a CSV file to save the keypoints
-    id = input("Enter the data ID: ")
-    file_name = 'recordings/ZED_2i_keypoints_'+ id +'.csv'
+    # Create a folder and a CSV file to save the keypoints
+    id = input("Enter the subject ID: ")
+    mvt_id = input("Enter the movement description: ")
+    file_name = 'recordings/subject'+ id +'/stereocamera_'+ mvt_id +'.csv'
     print("Creating file: ",file_name)
     # Create a queue for the CSV writer thread
     csv_queue = queue.Queue()
