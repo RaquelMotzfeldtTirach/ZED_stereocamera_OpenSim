@@ -1,5 +1,8 @@
 import opensim as osim
 import xml.etree.ElementTree as ET
+from inverseKinematics import main as run_inverse_kinematics
+import os
+
 
 def load_model(model_path):
     """Load the OpenSim model."""
@@ -53,6 +56,33 @@ def run_scaling(scale_tool):
     scale_tool.run()
     print("Scaling completed.")
 
+
+def extract_timestamps(trial_file_path):
+    start_time = None
+    end_time = None
+    with open(trial_file_path, 'r') as file:
+        line_count = 0
+        for line in file:
+            line = line.strip()
+            # Skip first 6 lines
+            if line_count < 6:
+                line_count += 1
+                continue
+            
+            # Check if the line starts with a frame number (indicates a data line)
+            if line[0].isdigit():
+                parts = line.split('\t')  # Split by tab; adjust if using a different delimiter
+                if len(parts) > 1:
+                    timestamp = float(parts[1])  # Convert the timestamp string to float
+                    # Initialize start_timestamp and update end_timestamp
+                    if start_time is None:
+                        start_time = timestamp
+                    end_time = timestamp  # Update every time we read a line
+            line_count += 1
+
+    return start_time, end_time
+
+
 def main():
     """Main entry point of the script."""
     model_path = 'OpenSim/models/Rajagopal/Rajagopal_2015.osim'
@@ -71,9 +101,6 @@ def main():
 
     output_model_file = "models/Rajagopal_scaled_subject"+subject_ID+".osim"
 
-
-
-
     # Create our own config file
     config_path = create_config_file(config_template_path, subject_ID, subject_mass, subject_height, subject_sex, subject_age, static_trial_path, output_model_file)
     print("Configuration file created at:", config_path)
@@ -89,6 +116,25 @@ def main():
 
     # Run the Scale Tool
     run_scaling(scale_tool)
+
+    # Run inverse kinematics with the scaled model
+    ik = input("Do you want to run inverse kinematics with the scaled model? (y/n): ")
+    if ik == 'y':
+        # for all .trc files in the subject's recordings directory
+        recordings_path = 'recordings/subject'+ subject_ID 
+        trc_files = []
+        for file in os.listdir(recordings_path):
+            if file.endswith('.trc'):
+                trial_file_path = os.path.join(recordings_path, file)
+                trc_files.append(trial_file_path)
+                trial_name = file.replace('.trc', '')
+                start_time, end_time = extract_timestamps(trial_file_path)
+                print(f"Running inverse kinematics for {trial_name}...")
+                run_inverse_kinematics(subject_ID, trial_name, start_time, end_time, trial_file_path)
+
+    else:
+        print("Skipping inverse kinematics.")
+
 
 
 if __name__ == "__main__":
