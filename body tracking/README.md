@@ -1,38 +1,114 @@
-# ZED SDK - Body Tracking
+# ZED Body Tracking & OpenSim Pipeline
 
-This sample shows how to detect and track human bodies in space.
+This repository provides a pipeline for 3D human body tracking using a ZED stereo camera, saving tracked keypoints, and processing them for biomechanical analysis with OpenSim. The workflow includes real-time body tracking, data export, post-processing, model scaling and running inverse kinematics on the results.
 
-## Getting Started
- - Get the latest [ZED SDK](https://www.stereolabs.com/developers/release/) and [pyZED Package](https://www.stereolabs.com/docs/app-development/python/install/)
- - Check the [Documentation](https://www.stereolabs.com/docs/)
+## Folder Structure
+- 'body_tracking.py'                # Main script for body tracking and data recording with ZED camera
+- OpenSim/
+      'modelScaling.py'             # Script for scaling OpenSim models
+      'inverseKinematics.py'        # Script for running OpenSim inverse kinematics 
+      'IK_setup_template.xml'       # Template for IK setup xml file
+      'scaling_setup_template.xml'  # Template for scaling setup xml file
+      models/                     # OpenSim models, geometry and scaled models
+- post_processing/
+      'convert_csv_to_formated_csv.py'  # CSV post processing to clean up file
+      'convert_csv_to_trc.py'           # CSV to OpenSim .trc conversion
+- recordings/
+      subjectXX/                  # Saved data for each subject
 
-## Dependencies
-```
-python3 -m pip install pyopengl
-```
- 
-## Run the program
-*NOTE: The ZED v1 is not compatible with this module*
+## Requirements
+- Linux, ubuntu 24.04 (not tested on previous versions)
+- Conda with OpenSim package
+- Latest ZED SDK and pyZED
+- Python 3.12.3
+- Python pakcages: opencv-python, numpy, matplotlib, csv, time, os, xml.etree.ElementTree, etc 
 
-To run the program, use the following command in your terminal : 
-```bash
-python body_tracking.py
-```
-If you wish to run the program from an input_svo_file, or an IP adress, or specify a resolution run : 
+## ZED Documentation
+ - Check the [ZED Documentation](https://www.stereolabs.com/docs/)
 
-```bash
-python body_tracking.py --input_svo_file <input_svo_file> --ip_address <ip_address> --resolution <resolution> 
-```
-Arguments: 
-  - --input_svo_file A path to an existing .svo file, that will be playbacked. If this parameter and ip_adress are not specified, the soft will use the camera wired as default.  
-  - --ip_address IP Address, in format a.b.c.d:port or a.b.c.d. If specified, the soft will try to connect to the IP.
-  - --resolution Resolution, can be either HD2K, HD1200, HD1080, HD720, SVGA or VGA
-## Features
- - Display bodies bounding boxes by pressing the `b` key.
+![1](https://github.com/user-attachments/assets/60c79a68-edf0-40b0-8eee-a99875b20d37)
 
-## Support
-If you need assistance go to our Community site at https://community.stereolabs.com/
+## Setup Instructions
 
-I had problems with conda taking over the python path, so I ran 
-conda deactivate 
-and then it worked
+### ZED StereoLabs python library
+1. **Install latest ZED SDK**
+  Follow the instructions on the website [ZED SDK](https://www.stereolabs.com/developers/release/)
+
+2. **Install the pyZED package**
+  Follow the instructions on the website [pyZED Package](https://www.stereolabs.com/docs/app-development/python/install/)
+
+3. **Install pyOPENGL**
+  ```sh
+  python3 -m pip install pyopengl
+  ```
+
+### Conda environement for OpenSense library
+
+1. **Install Conda:**
+  Follow the instructions on the Anaconda website: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
+
+2. **Create and activate Conda environment:**
+  ```sh
+  conda create -n opensim_scripting python=3.11 numpy
+  conda activate opensim_scripting
+  ```
+3. **Libraries installation:**
+  ```sh
+  conda install conda-forge::simbody
+  conda install conda-forge::cma
+  ```
+
+4. **OpenSim installation:**
+  ```sh
+  conda install -c opensim-org opensim
+  ```
+
+## Usage 
+- **Plug in the ZED camera**:
+  We use a ZED 2i with a usb-c to usb-c cable that supports USB3.0 and above.
+
+- **Go to the right directory**:
+  ```sh
+  cd body_tracking
+  ```
+
+- **Run the recording script**:
+  ```sh
+  python3 body_tracking.py
+  ```
+  You will be asked to provide the subject ID and the movement descriptor. 
+  A folder will be made for the subject and tracking data will be stored in csv form with the movement descriptor in the file name. 
+  To stop the recording write q then enter.
+  You will then be asked if you want to post-process the recording, we recommend that you do ('y'), it will then convert the csv file to .trc, which is compatible with OpenSim.
+  The script will show you the number of frames, the average fps and the star and end timestamps. 
+  The current body tracking settings use **NO body-fitting, use the FAST tracking model and the 38 body format skeleton**. 
+
+- **Run the recording again**
+  Run the recording for the same subject for different movements before starting to post-process the data with OpenSim.
+
+- **Post-processing OpenSim environment**:
+  ```sh
+  conda activate opensim_scripting
+  ```
+
+- **Skeletal model scaling**:
+  ```sh
+  python OpenSim/modelScaling.py
+  ``` 
+  This script will ask you to give the subject ID and information about the subject. 
+  As well as the file name of the .trc file you want to use to scale the model (usually static trial).
+  This will create a new, scaled model for your subject.
+  By default this uses the Rajagopal 2015 model in a sitting, palms open position (see model in OpenSim GUI). 
+
+- **Inverse Kinemtaics based on scaled model**:
+  The previous script will ask you if you want to run the inverse kinematics. Write 'y' if you do. 
+  The inverse kinematics script will then be called for each .trc file available in the subject's folder. 
+  A IK folder will be made for the result and the error files.
+
+## Pipeline schematic
+
+![2](https://github.com/user-attachments/assets/c1c270ca-25f2-4c39-81e6-c264469f5882)
+
+## Troubleshooting 
+
+To Be Made 
