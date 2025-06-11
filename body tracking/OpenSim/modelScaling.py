@@ -7,13 +7,22 @@ def load_model(model_path):
     print("Name of the model:", model.getName())
     return model
 
-def create_config_file(config_template_path):
+def create_config_file(config_template_path, subject_ID, subject_mass, subject_height, subject_sex, subject_age, static_trial_path, output_model_file):
+    """Create a configuration file for the Scale Tool."""
     tree = ET.parse(config_template_path)
     root = tree.getroot()
     for tag in root.iter('ScaleTool'):
-        tag.find('mass').text = '70.0'  # Set subject mass
+        tag.find('height').text = subject_height  
+        tag.find('age').text = subject_age  
+        tag.find('notes').text = subject_ID
+        tag.find('sex').text = subject_sex
+        tag.find('mass').text = subject_mass  
+        scaler = tag.find('ModelScaler')
+        scaler.find('marker_file').text = static_trial_path  
+        scaler.find('output_model_file').text = output_model_file  
 
-    new_file_path = 'recordings/subject01/scaling_setup.xml'
+
+    new_file_path = 'recordings/subject'+ subject_ID +'/scaling_setup.xml'
     tree.write(new_file_path, encoding='utf-8', xml_declaration=True)
     return new_file_path
 
@@ -25,9 +34,9 @@ def create_scale_tool(config_path):
 def print_scale_tool_info(scale_tool):
     """Print relevant information from the ScaleTool object."""
     print("Name:", scale_tool.getName())
+    print("ID:", scale_tool.getPropertyByName("notes").toString())
     print("Subject Mass:", scale_tool.getSubjectMass())
     print("Subject Height:", scale_tool.getSubjectHeight())
-    print("Notes:", scale_tool.getPropertyByName("notes").toString())
     print()
 
 def print_marker_file_names(scale_tool):
@@ -36,8 +45,8 @@ def print_marker_file_names(scale_tool):
     print("Marker Set File Name:", generic_model_maker.getMarkerSetFileName())
     print()
 
-    marker_placer = scale_tool.getMarkerPlacer()
-    print("Marker Placer File Name:", marker_placer.getMarkerFileName())
+    static_trial = scale_tool.getModelScaler()
+    print("Model Scaler File Name:", static_trial.getMarkerFileName())
 
 def run_scaling(scale_tool):
     """Run the Scale Tool."""
@@ -57,7 +66,8 @@ def main():
     subject_mass = input("Enter subject mass (kg): ")
     subject_height = input("Enter subject height (mm): ")
     subject_age = input("Enter subject age (years): ")
-    static_trial_path = input("Enter static trial file path: ")
+    subject_sex = input("Enter subject sex (male/female): ")
+    static_trial_path = input("Enter static trial file path, it should start with ../recordings/ : ")
 
     output_model_file = "models/Rajagopal_scaled_subject"+subject_ID+".osim"
 
@@ -65,20 +75,20 @@ def main():
 
 
     # Create our own config file
-    config_path = create_config_file(config_template_path, subject_ID, subject_mass, subject_height, subject_age, static_trial_path, output_model_file)
+    config_path = create_config_file(config_template_path, subject_ID, subject_mass, subject_height, subject_sex, subject_age, static_trial_path, output_model_file)
     print("Configuration file created at:", config_path)
 
     # Create and configure the Scale Tool
-    #scale_tool = create_scale_tool(config_path)
+    scale_tool = create_scale_tool(config_path)
 
     # Print Scale Tool information
-    #print_scale_tool_info(scale_tool)
+    print_scale_tool_info(scale_tool)
 
     # Print Marker file names
-    #print_marker_file_names(scale_tool)
+    print_marker_file_names(scale_tool)
 
     # Run the Scale Tool
-    #run_scaling(scale_tool)
+    run_scaling(scale_tool)
 
 
 if __name__ == "__main__":
