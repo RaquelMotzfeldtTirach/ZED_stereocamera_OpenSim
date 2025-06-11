@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='utf-8'?>
+<OpenSimDocument Version="40500">
+	<InverseKinematicsTool name="subject00">
+		
+		<model_file>/home/raquel/Documents/ZED/body tracking/OpenSim/models/Rajagopal/Rajagopal_scaled_subject00.osim</model_file>
+		
+		<constraint_weight>Unassigned</constraint_weight>
+		
+		<accuracy>1e-005</accuracy>
+		
+		<time_range>1749651033.784 1749651040.976</time_range>
+		
+		<output_motion_file>/home/raquel/Documents/ZED/body tracking/recordings/subject00/IK/stereocamera_static.mot</output_motion_file>
+		
+		<IKTaskSet>
+			<objects>
+				<IKMarkerTask name="JOINT_NECK">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_RIGHT_CLAVICLE">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_LEFT_CLAVICLE">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_RIGHT_SHOULDER">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_LEFT_SHOULDER">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_RIGHT_ELBOW">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_LEFT_ELBOW">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_LEFT_WRIST">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_RIGHT_WRIST">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_SPINE_3">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_SPINE_2">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_SPINE_1">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_PELVIS">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_RIGHT_HIP">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="JOINT_LEFT_HIP">
+					
+					<apply>true</apply>
+					
+					<weight>1</weight>
+				</IKMarkerTask>
+			</objects>
+			<groups />
+		</IKTaskSet>
+		
+		<marker_file>/home/raquel/Documents/ZED/body tracking/recordings/subject00/stereocamera_static.trc</marker_file>
+		
+		<coordinate_file>Unassigned</coordinate_file>
+	</InverseKinematicsTool>
+</OpenSimDocument>

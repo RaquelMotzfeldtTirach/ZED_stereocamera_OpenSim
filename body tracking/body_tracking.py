@@ -36,6 +36,7 @@ import threading
 import queue
 from post_processing.convert_csv_to_formated_csv import transform_csv 
 from post_processing.convert_csv_to_trc import process_transformed_csv
+import time
 
 
 def parse_args(init):
@@ -157,7 +158,13 @@ def main():
     id = input("Enter the subject ID: ")
     mvt_id = input("Enter the movement description: ")
     file_name = 'recordings/subject'+ id +'/stereocamera_'+ mvt_id +'.csv'
-    print("Creating file: ",file_name)
+    # Create subject## folder
+    try:
+        os.mkdir('recordings/subject'+ id)
+        print(f"Directory subject'{id}' created successfully.")
+    except FileExistsError:
+        print(f"Directory subject'{id}' already exists.")
+
     # Create a queue for the CSV writer thread
     csv_queue = queue.Queue()
     # Start the CSV writer thread
@@ -173,7 +180,13 @@ def main():
     listener_thread = threading.Thread(target=terminal_listener, args=(stop_flag, ), daemon=True)
     listener_thread.start()
 
-    print("Starting recarding.... Press 'q' then enter to stop")
+    # 10 seconds counting down
+    for i in range(10, 0, -1):
+        print(f"Recording will start in {i} seconds...", end='\r')
+        time.sleep(1)
+
+
+    print("Recording started...... Press 'q' then enter to stop")
     while not stop_flag.is_set():
         # Grab an image
         if zed.grab() == sl.ERROR_CODE.SUCCESS:

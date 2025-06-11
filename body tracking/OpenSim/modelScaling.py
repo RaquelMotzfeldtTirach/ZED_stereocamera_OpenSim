@@ -46,10 +46,14 @@ def print_marker_file_names(scale_tool):
     """Print the marker set and marker file names."""
     generic_model_maker = scale_tool.getGenericModelMaker()
     print("Marker Set File Name:", generic_model_maker.getMarkerSetFileName())
-    print()
 
     static_trial = scale_tool.getModelScaler()
     print("Model Scaler File Name:", static_trial.getMarkerFileName())
+
+    model_path = scale_tool.getGenericModelMaker().getModelFileName()
+    print("Model File Name:", model_path)
+    
+    print()
 
 def run_scaling(scale_tool):
     """Run the Scale Tool."""
@@ -97,9 +101,9 @@ def main():
     subject_height = input("Enter subject height (mm): ")
     subject_age = input("Enter subject age (years): ")
     subject_sex = input("Enter subject sex (male/female): ")
-    static_trial_path = input("Enter static trial file path, it should start with ../recordings/ : ")
+    static_trial_path = input("Enter static trial file name (.trc): ")
 
-    output_model_file = "models/Rajagopal_scaled_subject"+subject_ID+".osim"
+    output_model_file = "../../OpenSim/models/Rajagopal/Rajagopal_scaled_subject"+subject_ID+".osim"
 
     # Create our own config file
     config_path = create_config_file(config_template_path, subject_ID, subject_mass, subject_height, subject_sex, subject_age, static_trial_path, output_model_file)
@@ -121,7 +125,7 @@ def main():
     ik = input("Do you want to run inverse kinematics with the scaled model? (y/n): ")
     if ik == 'y':
         # for all .trc files in the subject's recordings directory
-        recordings_path = 'recordings/subject'+ subject_ID 
+        recordings_path = '/home/raquel/Documents/ZED/body tracking/recordings/subject'+ subject_ID 
         trc_files = []
         for file in os.listdir(recordings_path):
             if file.endswith('.trc'):

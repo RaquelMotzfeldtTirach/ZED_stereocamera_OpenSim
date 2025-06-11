@@ -4,6 +4,7 @@ import numpy as np
 import shutil
 import xml.etree.ElementTree as ET
 import argparse
+import os
 
 def create_config_file(config_template_path, subject_ID, model_file, start_time, end_time, trial_file_path, output_motion_file):
     """Create a configuration file for the IK Tool."""
@@ -12,7 +13,7 @@ def create_config_file(config_template_path, subject_ID, model_file, start_time,
     root.find('InverseKinematicsTool').set('name', 'subject' + subject_ID)
     for tag in root.iter('InverseKinematicsTool'):
         tag.find('model_file').text = model_file  
-        tag.find('time_range').text = start_time + ' ' + end_time  
+        tag.find('time_range').text = str(start_time) + ' ' + str(end_time)  
         tag.find('output_motion_file').text = output_motion_file
         tag.find('marker_file').text = trial_file_path
 
@@ -40,12 +41,12 @@ def print_ik_tool_info(ik_tool):
       print(task.getWeight())
       print()
 
-def run_inverse_kinematics(ik_tool):
+def run_inverse_kinematics(ik_tool, subject_ID, trial_name):
     # Run Inverse Kinematics Tool
     ik_tool.run()
 
     # Move error file to IK directory 
-    shutil.move('OpenSim/subject01_ik_marker_errors.sto', 'recordings/IK/subject01_ik_marker_errors.sto')
+    shutil.move('/home/raquel/Documents/ZED/body tracking/recordings/subject'+ subject_ID +'/subject'+ subject_ID +'_ik_marker_errors.sto', '/home/raquel/Documents/ZED/body tracking/recordings/subject'+ subject_ID+'/IK/'+ trial_name +'_ik_marker_errors.sto')
 
    
 
@@ -83,9 +84,15 @@ def main(subject_ID, trial_name, start_time, end_time, trial_file_path):
     """Main entry point of the script."""
     # Set IK information
     config_template_path = "OpenSim/IK_setup_template.xml"
-    model_file = "models/Rajagopal_scaled_subject"+ subject_ID +".osim"
+    model_file = "/home/raquel/Documents/ZED/body tracking/OpenSim/models/Rajagopal/Rajagopal_scaled_subject"+ subject_ID +".osim" 
 
-    output_motion_file = "../recordings/subject"+ subject_ID + "/IK/"+ trial_name +".mot"
+    output_motion_file = "/home/raquel/Documents/ZED/body tracking/recordings/subject"+ subject_ID + "/IK/"+ trial_name +".mot"
+    # Create IK folder
+    try:
+        os.mkdir("/home/raquel/Documents/ZED/body tracking/recordings/subject"+ subject_ID + "/IK")
+        print(f"Directory IK created successfully.")
+    except FileExistsError:
+        print(f"Directory IK already exists.")
 
     config_path = create_config_file(config_template_path, subject_ID, model_file, start_time, end_time, trial_file_path, output_motion_file)
     print("Configuration file created at:", config_path)
@@ -97,11 +104,11 @@ def main(subject_ID, trial_name, start_time, end_time, trial_file_path):
     print_ik_tool_info(inverse_kinematics_tool)
 
     # Run the Inverse Kinematics Tool.
-    run_inverse_kinematics(inverse_kinematics_tool)
+    run_inverse_kinematics(inverse_kinematics_tool, subject_ID, trial_name)
 
     # Use the TableProcessor to read the motion file.
-    table = osim.TableProcessor('recordings/IK/subject01_ik_marker_errors.sto')
-    plot_marker_errors(table)
+    #table = osim.TableProcessor('/home/raquel/Documents/ZED/body tracking/recordings/IK/subject01_ik_marker_errors.sto')
+    #plot_marker_errors(table)
 
 
 if __name__ == "__main__":
