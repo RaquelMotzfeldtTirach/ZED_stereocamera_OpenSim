@@ -116,7 +116,8 @@ This repository provides a pipeline for 3D human body tracking using a ZED stere
 
 ## Pipeline schematic
 
-![2](https://github.com/user-attachments/assets/c1c270ca-25f2-4c39-81e6-c264469f5882)
+![image](https://github.com/user-attachments/assets/45ff01cf-3bf1-462c-b057-2ff1b689eaed)
+
 
 ## Troubleshooting 
 
