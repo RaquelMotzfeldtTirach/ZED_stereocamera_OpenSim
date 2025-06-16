@@ -3,18 +3,27 @@
 This repository provides a pipeline for 3D human body tracking using a ZED stereo camera, saving tracked keypoints, and processing them for biomechanical analysis with OpenSim. The workflow includes real-time body tracking, data export, post-processing, model scaling and running inverse kinematics on the results.
 
 ## Folder Structure
-- 'body_tracking.py'                # Main script for body tracking and data recording with ZED camera
-- OpenSim/
-      'modelScaling.py'             # Script for scaling OpenSim models
-      'inverseKinematics.py'        # Script for running OpenSim inverse kinematics 
-      'IK_setup_template.xml'       # Template for IK setup xml file
-      'scaling_setup_template.xml'  # Template for scaling setup xml file
-      models/                     # OpenSim models, geometry and scaled models
-- post_processing/
-      'convert_csv_to_formated_csv.py'  # CSV post processing to clean up file
-      'convert_csv_to_trc.py'           # CSV to OpenSim .trc conversion
-- recordings/
-      subjectXX/                  # Saved data for each subject
+- `body_tracking.py`
+  Main script for body tracking and data recording with ZED camera
+- `OpenSim/`
+        `modelScaling.py`
+        Script for scaling OpenSim models
+        `inverseKinematics.py`
+        Script for running OpenSim inverse kinematics 
+        `IK_setup_template.xml`
+        Template for IK setup xml file
+        `scaling_setup_template.xml`
+        Template for scaling setup xml file
+        `models/`
+        OpenSim models, geometry and scaled models
+- `post_processing/`
+        `convert_csv_to_formated_csv.py`
+        CSV post processing to clean up file
+        `convert_csv_to_trc.py`
+        CSV to OpenSim .trc conversion
+- `recordings/`
+        `subjectXX/`
+        Saved data for each subject
 
 ## Requirements
 - Linux, ubuntu 24.04 (not tested on previous versions)
@@ -26,7 +35,7 @@ This repository provides a pipeline for 3D human body tracking using a ZED stere
 ## ZED Documentation
  - Check the [ZED Documentation](https://www.stereolabs.com/docs/)
 
-![1](https://github.com/user-attachments/assets/60c79a68-edf0-40b0-8eee-a99875b20d37)
+![image](https://github.com/user-attachments/assets/e66c263e-30c3-407e-ae18-6960ce954a21)
 
 ## Setup Instructions
 
