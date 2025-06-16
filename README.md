@@ -3,27 +3,27 @@
 This repository provides a pipeline for 3D human body tracking using a ZED stereo camera, saving tracked keypoints, and processing them for biomechanical analysis with OpenSim. The workflow includes real-time body tracking, data export, post-processing, model scaling and running inverse kinematics on the results.
 
 ## Folder Structure
-- `body_tracking.py`
+- `body_tracking.py` <br />
   Main script for body tracking and data recording with ZED camera
-- `OpenSim/`
-        `modelScaling.py`
-        Script for scaling OpenSim models
-        `inverseKinematics.py`
-        Script for running OpenSim inverse kinematics 
-        `IK_setup_template.xml`
-        Template for IK setup xml file
-        `scaling_setup_template.xml`
-        Template for scaling setup xml file
-        `models/`
-        OpenSim models, geometry and scaled models
-- `post_processing/`
-        `convert_csv_to_formated_csv.py`
-        CSV post processing to clean up file
-        `convert_csv_to_trc.py`
-        CSV to OpenSim .trc conversion
-- `recordings/`
-        `subjectXX/`
-        Saved data for each subject
+- `OpenSim/` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; `modelScaling.py` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; Script for scaling OpenSim models <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; `inverseKinematics.py` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; Script for running OpenSim inverse kinematics <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; `IK_setup_template.xml` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; Template for IK setup xml file <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; `scaling_setup_template.xml` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; Template for scaling setup xml file <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; `models/` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; OpenSim models, geometry and scaled models <br />
+- `post_processing/` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; `convert_csv_to_formated_csv.py` <br /> 
+        &nbsp;&nbsp;&nbsp;&nbsp; CSV post processing to clean up file <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; `convert_csv_to_trc.py` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; CSV to OpenSim .trc conversion <br />
+- `recordings/` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; `subjectXX/` <br />
+        &nbsp;&nbsp;&nbsp;&nbsp; Saved data for each subject
 
 ## Requirements
 - Linux, ubuntu 24.04 (not tested on previous versions)
