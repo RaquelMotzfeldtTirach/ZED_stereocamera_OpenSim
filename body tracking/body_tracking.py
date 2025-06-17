@@ -124,7 +124,7 @@ def main():
     
     body_param = sl.BodyTrackingParameters()
     body_param.enable_tracking = True                # Track people across images flow
-    body_param.enable_body_fitting = False            # Smooth skeleton move (True later!)
+    body_param.enable_body_fitting = True            # Smooth skeleton move (True later!)
     body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_FAST  # Choose the BODY_TRACKING_MODEL you wish to use: HUMAN_BODY_FAST, HUMAN_BODY_ACCURATE or HUMAN_BODY_MEDIUM    body_param.body_format = sl.BODY_FORMAT.BODY_38  # Choose the BODY_FORMAT you wish to use 18, 34 or 38
     body_param.body_format = sl.BODY_FORMAT.BODY_38  # Choose the BODY_FORMAT you wish to use 18, 34 or 38
 
@@ -140,7 +140,7 @@ def main():
 
     # 2D viewer utilities
     display_resolution = sl.Resolution(min(camera_info.camera_configuration.resolution.width, 1280), min(camera_info.camera_configuration.resolution.height, 720))
-    #image_scale = [display_resolution.width / camera_info.camera_configuration.resolution.width, display_resolution.height / camera_info.camera_configuration.resolution.height]
+    image_scale = [display_resolution.width / camera_info.camera_configuration.resolution.width, display_resolution.height / camera_info.camera_configuration.resolution.height]
 
     # Create OpenGL viewer
     #viewer = gl.GLViewer()
@@ -197,9 +197,9 @@ def main():
             # Update GL view
             # viewer.update_view(image, bodies) 
             # Update OCV view
-            #image_left_ocv = image.get_data()
-            #cv_viewer.render_2D(image_left_ocv,image_scale, bodies.body_list, body_param.enable_tracking, body_param.body_format)
-            #cv2.imshow("ZED | 2D View", image_left_ocv)
+            image_left_ocv = image.get_data()
+            cv_viewer.render_2D(image_left_ocv,image_scale, bodies.body_list, body_param.enable_tracking, body_param.body_format)
+            cv2.imshow("ZED | 2D View", image_left_ocv)
 
             # Write in csv
             if bodies.body_list:
