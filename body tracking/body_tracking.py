@@ -97,7 +97,7 @@ def terminal_listener(stop_flag):
             break
 
 def main():
-    print("Running Body Tracking sample ... Press 'q' to quit, or 'm' to pause or restart")
+    print("Running Body Tracking sample ... Press 'q' to quit")
 
     # Create a Camera object
     zed = sl.Camera()
@@ -197,9 +197,9 @@ def main():
             # Update GL view
             # viewer.update_view(image, bodies) 
             # Update OCV view
-            image_left_ocv = image.get_data()
-            cv_viewer.render_2D(image_left_ocv,image_scale, bodies.body_list, body_param.enable_tracking, body_param.body_format)
-            cv2.imshow("ZED | 2D View", image_left_ocv)
+            #image_left_ocv = image.get_data()
+            #cv_viewer.render_2D(image_left_ocv,image_scale, bodies.body_list, body_param.enable_tracking, body_param.body_format)
+            #cv2.imshow("ZED | 2D View", image_left_ocv)
 
             # Write in csv
             if bodies.body_list:

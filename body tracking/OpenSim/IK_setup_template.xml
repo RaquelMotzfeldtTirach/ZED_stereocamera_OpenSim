@@ -14,91 +14,91 @@
 		<!--Markers and coordinates to be considered (tasks) and their weightings. The sum of weighted-squared task errors composes the cost function.-->
 		<IKTaskSet>
 			<objects>
-				<IKMarkerTask name="JOINT_NECK">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_NECK">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_RIGHT_CLAVICLE">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_RIGHT_CLAVICLE">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_LEFT_CLAVICLE">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_LEFT_CLAVICLE">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_RIGHT_SHOULDER">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_RIGHT_SHOULDER">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_LEFT_SHOULDER">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_LEFT_SHOULDER">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_RIGHT_ELBOW">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_RIGHT_ELBOW">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_LEFT_ELBOW">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_LEFT_ELBOW">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_LEFT_WRIST">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_LEFT_WRIST">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_RIGHT_WRIST">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_RIGHT_WRIST">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_SPINE_3">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_SPINE_3">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_SPINE_2">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_SPINE_2">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_SPINE_1">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_SPINE_1">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_PELVIS">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_PELVIS">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_RIGHT_HIP">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_RIGHT_HIP">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
 					<weight>1</weight>
 				</IKMarkerTask>
-				<IKMarkerTask name="JOINT_LEFT_HIP">
+				<IKMarkerTask name="STEREOCAMERA_JOINT_LEFT_HIP">
 					<!--Whether or not this task will be used during inverse kinematics solve, default is true.-->
 					<apply>true</apply>
 					<!--Weight given to the task when solving inverse kinematics problems, default is 0.-->
