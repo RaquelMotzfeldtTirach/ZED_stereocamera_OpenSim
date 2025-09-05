@@ -48,17 +48,10 @@ def transform_csv(file_path):
 
     # The model joint names are different from the keypoint names in the CSV file
     # So we have to change the keypoint names to match the model joint names by adding "JOINT_" prefix to each column name
-    # And adding "_STEREOCAMERA" suffix to each column name
+    # And adding "STEREOCAMERA" prefix to each column name
     pivot_df.columns = [f'STEREOCAMERA_JOINT_{col}' if col != 'Timestamp' else col for col in pivot_df.columns]
 
-    # The video is mirrored, so we need to invert the RIGHT and LEFT joints
-    pivot_df.columns = [
-        col.replace('RIGHT_', 'TEMP_').replace('LEFT_', 'RIGHT_').replace('TEMP_', 'LEFT_') if 'RIGHT_' in col or 'LEFT_' in col else col
-        for col in pivot_df.columns
-    ]
-
-    # Delete the whole row if any of the columns are NaN
-    #pivot_df.dropna(how='any', inplace=True)
+    # The video is not mirrored, no need to swap left and right joints
 
     # Create the output filename
     base_name = os.path.basename(file_path)
