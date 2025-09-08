@@ -46,9 +46,9 @@ def process_transformed_csv(file_path):
         joints = [get_joint_coords_by_idx(df, i, joint[0]) for joint in joint_map]
         line = f'{i+1}\t{time:.6f}\t'
         line += "\t".join(
-            f"{joints[coords][joint_map[coords][1]] * 1000:.6f}\t"
+            f"{joints[coords][joint_map[coords][3]] * 1000:.6f}\t"
             f"{joints[coords][joint_map[coords][2]] * 1000:.6f}\t"
-            f"{joints[coords][joint_map[coords][3]] * -1000:.6f}"
+            f"{joints[coords][joint_map[coords][1]] * -1000:.6f}"
             for coords in range(len(joints))
         )   
         lines.append(line + '\n')

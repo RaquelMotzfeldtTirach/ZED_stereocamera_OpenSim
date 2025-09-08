@@ -52,10 +52,11 @@ def transform_csv(file_path):
     pivot_df.columns = [f'STEREOCAMERA_JOINT_{col}' if col != 'Timestamp' else col for col in pivot_df.columns]
 
     # The video is mirrored, so we need to invert the RIGHT and LEFT joints
-    pivot_df.columns = [
-        col.replace('RIGHT_', 'TEMP_').replace('LEFT_', 'RIGHT_').replace('TEMP_', 'LEFT_') if 'RIGHT_' in col or 'LEFT_' in col else col
-        for col in pivot_df.columns
-    ]
+    #pivot_df.columns = [
+    #    col.replace('RIGHT_', 'TEMP_').replace('LEFT_', 'RIGHT_').replace('TEMP_', 'LEFT_') if 'RIGHT_' in col or 'LEFT_' in col else col
+    #    for col in pivot_df.columns
+    #]
+    
     # Delete the whole row if any of the columns are NaN
     pivot_df.dropna(how='any', inplace=True)
 
