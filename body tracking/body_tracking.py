@@ -37,6 +37,7 @@ import queue
 from post_processing.convert_csv_to_formated_csv import transform_csv 
 from post_processing.convert_csv_to_trc import process_transformed_csv
 import time
+import signal
 
 
 def parse_args(init):
@@ -88,16 +89,20 @@ def csv_writer_thread(file_name, csv_queue):
                 break
             writer.writerows(data)
 
-def terminal_listener(stop_flag):
-    while True:
-        user_input = input()
-        if user_input.strip().lower() == 'q':
-            print("Detected 'q' in terminal. Exiting...")
-            stop_flag.set()
-            break
+
+class GracefulKiller:
+    kill_now = False
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self, signum, frame):
+        self.kill_now = True
+
 
 def main(ID, TRIAL):
-    print("Running Body Tracking sample ... Press 'q' to quit")
+    # Initialize killer
+    killer = GracefulKiller()
 
     # Create a Camera object
     zed = sl.Camera()
@@ -182,10 +187,6 @@ def main(ID, TRIAL):
     keypoint_names = ['PELVIS', 'SPINE_1', 'SPINE_2', 'SPINE_3', 'NECK', 'NOSE', 'LEFT_EYE', 'RIGHT_EYE', 'LEFT_EAR', 'RIGHT_EAR', 'LEFT_CLAVICLE', 'RIGHT_CLAVICLE', 'LEFT_SHOULDER', 'RIGHT_SHOULDER', 'LEFT_ELBOW', 'RIGHT_ELBOW', 'LEFT_WRIST', 'RIGHT_WRIST', 'LEFT_HIP', 'RIGHT_HIP', 'LEFT_KNEE', 'RIGHT_KNEE', 'LEFT_ANKLE', 'RIGHT_ANKLE', 'LEFT_BIG_TOE', 'RIGHT_BIG_TOE', 'LEFT_SMALL_TOE', 'RIGHT_SMALL_TOE', 'LEFT_HEEL', 'RIGHT_HEEL', 'LEFT_HAND_THUMB_4', 'RIGHT_HAND_THUMB_4', 'LEFT_HAND_INDEX_1', 'RIGHT_HAND_INDEX_1', 'LEFT_HAND_MIDDLE_4', 'RIGHT_HAND_MIDDLE_4', 'LEFT_HAND_PINKY_1', 'RIGHT_HAND_PINKY_1']
     interesting_keypoints = [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
-    # Start terminal listener thread
-    stop_flag = threading.Event()
-    listener_thread = threading.Thread(target=terminal_listener, args=(stop_flag, ), daemon=True)
-    listener_thread.start()
 
     # 10 seconds counting down
     for i in range(10, 0, -1):
@@ -193,8 +194,7 @@ def main(ID, TRIAL):
         time.sleep(1)
 
 
-    print("Recording started...... Press 'q' then enter to stop")
-    while not stop_flag.is_set():
+    while not killer.kill_now: #stop_flag.is_set():
         # Grab an image
         if zed.grab() == sl.ERROR_CODE.SUCCESS:
             # Retrieve left image
@@ -219,17 +219,7 @@ def main(ID, TRIAL):
                 ]
                 csv_queue.put(data)  # Add data to the queue
 
-            key = cv2.waitKey(key_wait)
-            if key == 113: # for 'q' key
-                print("Exiting...")
-                break
-            if key == 109: # for 'm' key
-                if (key_wait>0):
-                    print("Pause")
-                    key_wait = 0 
-                else : 
-                    print("Restart")
-                    key_wait = 10 
+
 
 
     csv_queue.put(None)        
@@ -242,7 +232,8 @@ def main(ID, TRIAL):
     cv2.destroyAllWindows()
 
     # Post Processing
-    post_processing = input("Do you want to post-process the data? (y/n): ")
+    #post_processing = input("Do you want to post-process the data? (y/n): ")
+    post_processing = 'y'
     if post_processing.lower() == 'y':
         print("Post-processing the data...")
         # Transform the CSV file to csv
@@ -253,6 +244,8 @@ def main(ID, TRIAL):
         print("Post-processing completed.")
     else:
         print("Post-processing skipped. Data saved to " + file_name)
+    
+    sys.exit()
     
     
 if __name__ == '__main__':
