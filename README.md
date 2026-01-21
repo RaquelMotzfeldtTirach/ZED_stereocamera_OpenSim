@@ -1,4 +1,4 @@
-# ZED Body Tracking & OpenSim Pipeline
+# ZED Stereocamera Body Tracking & OpenSim Pipeline
 
 This repository provides a pipeline for 3D human body tracking using a ZED stereo camera, saving tracked keypoints, and processing them for biomechanical analysis with OpenSim. The workflow includes real-time body tracking, data export, post-processing, model scaling and running inverse kinematics on the results.
 
@@ -121,4 +121,4 @@ This repository provides a pipeline for 3D human body tracking using a ZED stere
 
 ## Troubleshooting 
 
-To Be Made 
+To come
