@@ -84,13 +84,13 @@ def main(opt):
     body_param.detection_model = sl.BODY_TRACKING_MODEL.HUMAN_BODY_FAST 
     body_param.body_format = sl.BODY_FORMAT.BODY_38
     body_param.body_selection = sl.BODY_KEYPOINTS_SELECTION.UPPER_BODY
-    body_param.prediction_timeout_s = 1
+    body_param.prediction_timeout_s = 5 #in seconds of searching before it terminates the tracking of a body
 
     # Enable Object Detection module
     zed.enable_body_tracking(body_param)
 
     body_runtime_param = sl.BodyTrackingRuntimeParameters()
-    body_runtime_param.detection_confidence_threshold = 40
+    body_runtime_param.detection_confidence_threshold = 40 
 
     # Get ZED camera information
     camera_info = zed.get_camera_information()
