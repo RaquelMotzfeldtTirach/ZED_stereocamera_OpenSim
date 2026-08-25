@@ -25,7 +25,6 @@
 import cv2
 import sys
 import pyzed.sl as sl
-import ogl_viewer.viewer as gl
 import cv_viewer.tracking_viewer as cv_viewer
 import numpy as np
 import argparse
@@ -106,6 +105,14 @@ class GracefulKiller:
 
 
 def main(ID, TRIAL):
+
+    # Visualize 
+    visualize = True
+
+    # Performance tweaks
+    # Print status only every N frames to avoid slowing down the loop
+    print_every_n_frames = 30
+
     # Initialize killer
     killer = GracefulKiller()
 
@@ -161,10 +168,10 @@ def main(ID, TRIAL):
 
     # Enable Object Detection module
     zed.enable_body_tracking(body_param)
-
-
     body_runtime_param = sl.BodyTrackingRuntimeParameters()
-    body_runtime_param.detection_confidence_threshold = 40 # can be changed to have better results
+    body_runtime_param.detection_confidence_threshold = 80 # can be changed to have better results
+    body_runtime_param.minimum_keypoints_threshold = 1
+    body_runtime_param.skeleton_smoothing = 0
 
     # Get ZED camera information
     camera_info = zed.get_camera_information()
@@ -177,27 +184,28 @@ def main(ID, TRIAL):
         ]
     
     # Prepare an OpenCV window that will be set to fullscreen.
-    window_name = "ZED | 2D View"
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    # Try to get the actual screen resolution to resize frames to fullscreen
-    if _tk is not None:
-        try:
-            _root = _tk.Tk()
-            _root.withdraw()
-            screen_w = _root.winfo_screenwidth()
-            screen_h = _root.winfo_screenheight()
-            _root.destroy()
-        except Exception:
+    if visualize: 
+        window_name = "ZED | 2D View"
+        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        # Try to get the actual screen resolution to resize frames to fullscreen
+        if _tk is not None:
+            try:
+                _root = _tk.Tk()
+                _root.withdraw()
+                screen_w = _root.winfo_screenwidth()
+                screen_h = _root.winfo_screenheight()
+                _root.destroy()
+            except Exception:
+                screen_w = display_resolution.width
+                screen_h = display_resolution.height
+        else:
             screen_w = display_resolution.width
             screen_h = display_resolution.height
-    else:
-        screen_w = display_resolution.width
-        screen_h = display_resolution.height
-    try:
-        cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-    except Exception:
-        pass
-    
+        try:
+            cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        except Exception:
+            pass
+        
     # Create ZED objects filled in the main loop
     bodies = sl.Bodies()
     all_historical_bodies = {}
@@ -206,6 +214,7 @@ def main(ID, TRIAL):
     runtime_params.measure3D_reference_frame = sl.REFERENCE_FRAME.WORLD
     image = sl.Mat()
     key_wait = 10
+    frame_count = 0
 
 
     # Create a queue for the CSV writer thread
@@ -219,19 +228,21 @@ def main(ID, TRIAL):
     interesting_keypoints = [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
 
 
-    # 10 seconds counting down
-    for i in range(10, 0, -1):
-        print(f"Recording will start in {i} seconds...", end='\r')
-        time.sleep(1)
+    # 10 seconds counting down for not in visualize/debugging mode 
+    if visualize is False: 
+        for i in range(10, 0, -1):
+            print(f"Recording will start in {i} seconds...", end='\r')
+            time.sleep(1)
 
 
     while not killer.kill_now: #stop_flag.is_set():
         # Grab an image
         if zed.grab() == sl.ERROR_CODE.SUCCESS:
-            # Retrieve left image
-            zed.retrieve_image(image, sl.VIEW.LEFT, sl.MEM.CPU, display_resolution)
-            # Retrieve bodies
+            # Retrieve bodies first (no need to retrieve the image when not visualizing)
             zed.retrieve_bodies(bodies, body_runtime_param)
+            # Retrieve left image only if we need to display it
+            if visualize:
+                zed.retrieve_image(image, sl.VIEW.LEFT, sl.MEM.CPU, display_resolution)
             
             # ------------------------------------------------------------------
             # Only keep body with ID 0
@@ -243,8 +254,9 @@ def main(ID, TRIAL):
                     break
 
             if body_0 is not None:
-                # Print info only for body ID 0
-                print(f'Body ID: {body_0.id}, Position: {body_0.position}, Tracking state: {body_0.tracking_state}')
+                # Print info only occasionally to avoid slowing down the loop
+                if frame_count % print_every_n_frames == 0:
+                    print(f'Body ID: {body_0.id}, Position: {body_0.position}, Tracking state: {body_0.tracking_state}')
 
                 # Maintain history only for ID 0 (optional)
                 if body_0.id not in all_historical_bodies:
@@ -256,13 +268,7 @@ def main(ID, TRIAL):
                 all_historical_bodies[body_0.id]["tracking_states"].append(body_0.tracking_state)
 
                 body_list_to_draw = [body_0]
-            else:
-                # No body with ID 0 detected in this frame
-                body_list_to_draw = []
-                print("Body ID 0 not detected in this frame.")
-
-            # Write in csv
-            if body_0 is not None:
+                # write in csv
                 timestamp = bodies.timestamp.get_milliseconds()
                 # Prepare data for the CSV writer thread
                 data = [
@@ -270,41 +276,49 @@ def main(ID, TRIAL):
                     for i, keypoint in enumerate(body_0.keypoint) if i in interesting_keypoints
                 ]
                 csv_queue.put(data)  # Add data to the queue
+            else:
+                # No body with ID 0 detected in this frame
+                body_list_to_draw = []
+                # Throttle absence messages as well
+                if frame_count % print_every_n_frames == 0:
+                    print("Body ID 0 not detected in this frame.")
 
             # ------------------------------------------------------------------
             # Render ONLY body ID 0 (if present)
             # ------------------------------------------------------------------
-            image_left_ocv = image.get_data()
-            cv_viewer.render_2D(
-                image_left_ocv,
-                image_scale,
-                body_list_to_draw,
-                body_param.enable_tracking,
-                body_param.body_format
-            )
+            if visualize:
+                image_left_ocv = image.get_data()
+                cv_viewer.render_2D(
+                    image_left_ocv,
+                    image_scale,
+                    body_list_to_draw,
+                    body_param.enable_tracking,
+                    body_param.body_format
+                )
 
-            try:
-                image_to_show = cv2.resize(image_left_ocv, (screen_w, screen_h), interpolation=cv2.INTER_LINEAR)
-            except Exception:
-                image_to_show = image_left_ocv
+                try:
+                    image_to_show = cv2.resize(image_left_ocv, (screen_w, screen_h), interpolation=cv2.INTER_LINEAR)
+                except Exception:
+                    image_to_show = image_left_ocv
 
-            cv2.imshow(window_name, image_to_show)
-            key = cv2.waitKey(key_wait)
-            if key == 113:  # 'q'
-                print("Exiting...")
-                killer.kill_now = True
-                break
-            if key == 109:  # 'm'
-                if key_wait > 0:
-                    print("Pause")
-                    key_wait = 0
-                else:
-                    print("Restart")
-                    key_wait = 10
+                cv2.imshow(window_name, image_to_show)
+                key = cv2.waitKey(key_wait)
+                if key == 113:  # 'q'
+                    print("Exiting...")
+                    killer.kill_now = True
+                    break
+                if key == 109:  # 'm'
+                    if key_wait > 0:
+                        print("Pause")
+                        key_wait = 0
+                    else:
+                        print("Restart")
+                        key_wait = 10
+            # Increment frame counter for throttling/logging
+            frame_count += 1
 
     csv_queue.put(None)
     csv_thread.join() 
-    #viewer.exit()
     image.free(sl.MEM.CPU)
     zed.disable_body_tracking()
     zed.disable_positional_tracking()

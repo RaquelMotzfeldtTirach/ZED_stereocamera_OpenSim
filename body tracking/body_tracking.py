@@ -169,10 +169,10 @@ def main(ID, TRIAL):
     else: 
         mvt_id = input("Enter the trial description: ")
 
-    file_name = 'recordings/subject'+ id +'/stereocamera_'+ mvt_id +'.csv'
+    file_name = '/home/raquel/Documents/demos/recordings/subject'+ id +'/stereocamera_'+ mvt_id +'.csv'
     # Create subject## folder
     try:
-        os.mkdir('recordings/subject'+ id)
+        os.mkdir('/home/raquel/Documents/demos/recordings/subject'+ id)
         print(f"Directory subject'{id}' created successfully.")
     except FileExistsError:
         print(f"Directory subject'{id}' already exists.")
@@ -197,6 +197,7 @@ def main(ID, TRIAL):
     while not killer.kill_now: #stop_flag.is_set():
         # Grab an image
         if zed.grab() == sl.ERROR_CODE.SUCCESS:
+            print("recording..")
             # Retrieve left image
             zed.retrieve_image(image, sl.VIEW.LEFT, sl.MEM.CPU, display_resolution)
             # Retrieve bodies
