@@ -73,16 +73,67 @@ def transform_csv(file_path):
     return output_file_path
 
 def retrieve_confidence(file_path):
-    # Implementation for retrieving confidence values
+    # Load the CSV file
+    df = pd.read_csv(file_path)
 
-    pass
+    # Replace 'nan' strings with actual NaN values
+    df.replace("nan", np.nan, inplace=True)
+
+    # Ensure Timestamp is numeric and sort
+    df['Timestamp'] = pd.to_numeric(df['Timestamp'], errors='coerce')
+    df = df.dropna(subset=['Timestamp'])
+    df.sort_values('Timestamp', inplace=True)
+
+    # Normalize keypoint names by removing suffixes so pivot columns match expected names
+    df['Keypoint Name'] = df['Keypoint Name'].astype(str).str.replace('_MIDDLE_4', '', regex=False)
+
+    # Get ordered list of unique keypoint names (preserve first appearance order)
+    keypoints = list(pd.unique(df['Keypoint Name'].dropna()))
+    print(f"Found {len(keypoints)} keypoints: {keypoints}")
+
+    # Ensure Confidence is numeric
+    df['Confidence'] = pd.to_numeric(df['Confidence'], errors='coerce')
+
+    # Pivot the DataFrame to have one row per Timestamp and one column per Keypoint Name
+    conf_df = df.pivot_table(index='Timestamp', columns='Keypoint Name', values='Confidence', aggfunc='first')
+
+    # Reindex columns to ensure consistent keypoint order and fill missing values with 0.0
+    conf_df = conf_df.reindex(columns=keypoints)
+    conf_df.fillna(0.0, inplace=True)
+
+    # Reset index so Timestamp becomes a column again
+    conf_df.reset_index(inplace=True)
+
+    # Create the output filename
+    base_name = os.path.basename(file_path)
+    output_file_name = f"confidence_{base_name}"
+    output_file_path = os.path.join(os.path.dirname(file_path), output_file_name)
+
+    # Save the result into a new CSV file
+    conf_df.to_csv(output_file_path, index=False)
+    print(f"Confidence data saved to {output_file_path}")
+    return output_file_path
 
 def main(folder_path):
-    # List all CSV files in the specified folder
-    for file in os.listdir(folder_path):
-        if file.endswith('.csv'):
-            file_path = os.path.join(folder_path, file)
+    # If a single file path is provided, process that file. Otherwise treat input as a folder.
+    if os.path.isfile(folder_path):
+        file_path = folder_path
+        if file_path.endswith('.csv'):
+            print(f"Processing file: {file_path}")
             transform_csv(file_path)
+            retrieve_confidence(file_path)
+        else:
+            print(f"Provided file is not a CSV: {file_path}")
+    elif os.path.isdir(folder_path):
+        # List all CSV files in the specified folder
+        for file in os.listdir(folder_path):
+            if file.endswith('.csv'):
+                file_path = os.path.join(folder_path, file)
+                print(f"Processing file: {file_path}")
+                transform_csv(file_path)
+                retrieve_confidence(file_path)
+    else:
+        print(f"Path does not exist: {folder_path}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

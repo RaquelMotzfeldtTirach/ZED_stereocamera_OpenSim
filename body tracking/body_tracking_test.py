@@ -34,6 +34,7 @@ from datetime import datetime
 import threading
 import queue
 from post_processing.convert_csv_to_formated_csv import transform_csv 
+from post_processing.convert_csv_to_formated_csv import retrieve_confidence 
 from post_processing.convert_csv_to_trc import process_transformed_csv
 import time
 import signal
@@ -332,6 +333,8 @@ def main(ID, TRIAL):
         print("Post-processing the data...")
         # Transform the CSV file to csv
         output_file_path = transform_csv(file_name)
+        # Retrieve confidence for adaptive weights
+        conf_output_file_path = retrieve_confidence(file_name)
         # Transform the new CSV to TRC for OpenSim
         process_transformed_csv(output_file_path)
 
