@@ -17,7 +17,7 @@ def transform_csv(file_path):
         'LEFT_BIG_TOE', 'RIGHT_BIG_TOE', 'LEFT_SMALL_TOE', 'RIGHT_SMALL_TOE',
         'LEFT_HEEL', 'RIGHT_HEEL',
         'LEFT_HAND_THUMB_4', 'RIGHT_HAND_THUMB_4', 'LEFT_HAND_INDEX_1', 'RIGHT_HAND_INDEX_1',
-        'LEFT_HAND_MIDDLE_4', 'RIGHT_HAND_MIDDLE_4', 'LEFT_HAND_PINKY_1', 'RIGHT_HAND_PINKY_1',
+        'LEFT_HAND_PINKY_1', 'RIGHT_HAND_PINKY_1',
         'NOSE', 'LEFT_EYE', 'RIGHT_EYE', 'LEFT_EAR', 'RIGHT_EAR'
     ]
 
@@ -50,13 +50,15 @@ def transform_csv(file_path):
     # So we have to change the keypoint names to match the model joint names by adding "JOINT_" prefix to each column name
     # And adding "STEREOCAMERA" prefix to each column name
     pivot_df.columns = [f'STEREOCAMERA_JOINT_{col}' if col != 'Timestamp' else col for col in pivot_df.columns]
+    # Deleting sufix "_MIDDLE_4"
+    pivot_df.columns = [col.replace('_MIDDLE_4', '') if '_MIDDLE_4' in col else col for col in pivot_df.columns]
 
     # The video is mirrored, so we need to invert the RIGHT and LEFT joints
     #pivot_df.columns = [
     #    col.replace('RIGHT_', 'TEMP_').replace('LEFT_', 'RIGHT_').replace('TEMP_', 'LEFT_') if 'RIGHT_' in col or 'LEFT_' in col else col
     #    for col in pivot_df.columns
     #]
-    
+
     # Delete the whole row if any of the columns are NaN
     pivot_df.dropna(how='any', inplace=True)
 
@@ -69,6 +71,11 @@ def transform_csv(file_path):
     pivot_df.to_csv(output_file_path, index=False)
     print(f"Transformed data saved to {output_file_path}")
     return output_file_path
+
+def retrieve_confidence(file_path):
+    # Implementation for retrieving confidence values
+
+    pass
 
 def main(folder_path):
     # List all CSV files in the specified folder
